@@ -28,6 +28,7 @@ async function init() {
   if (s.error || t.error || c.error || sub.error) throw s.error || t.error || c.error || sub.error;
   sessions=s.data||[]; terms=t.data||[]; classes=c.data||[]; subjects=sub.data||[];
   if(profile.role === "parent") return parentView();
+  if(profile.role === "admin") return adminView();
   return teacherView();
 }
 
@@ -120,6 +121,32 @@ async function saveSheet(){
   msg.textContent="Result sheet saved. It remains unpublished until the school publishes it.";msg.className="form-message success";
 }
 
+async function adminView(){
+  const current=sessions.find(x=>x.is_current)?.id||sessions[0]?.id||"";
+  content.innerHTML='<div class="section-heading"><p class="eyebrow">Administration</p><h2>Result Publishing</h2><p class="muted">Review completed result sheets and publish them to parent accounts.</p></div>'+
+    '<div class="result-toolbar">'+select("session","Academic Session",sessions,current)+select("term","Term",terms,terms[0]?.id||"")+'</div><div id="admin-results"></div>';
+  document.getElementById("session").onchange=renderAdmin;
+  document.getElementById("term").onchange=renderAdmin;
+  await renderAdmin();
+}
+
+async function renderAdmin(){
+  const sessionId=document.getElementById("session").value, termId=document.getElementById("term").value, box=document.getElementById("admin-results");
+  const {data,error}=await supabase.from("result_summaries").select("id,student_id,average,position,teacher_remark,published,students(full_name,admission_number,classes(name))").eq("session_id",sessionId).eq("term_id",termId).order("average",{ascending:false});
+  if(error){box.innerHTML='<div class="empty-state">'+esc(error.message)+'</div>';return;}
+  box.innerHTML='<div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Average</th><th>Position</th><th>Status</th><th></th></tr></thead><tbody>'+
+    (data||[]).map(x=>'<tr><td><strong>'+esc(x.students?.full_name)+'</strong><br><small>'+esc(x.students?.admission_number||"")+'</small></td><td>'+esc(x.students?.classes?.name||"—")+'</td><td>'+Number(x.average).toFixed(1)+'%</td><td>'+ (x.position?x.position+ordinal(x.position):"—")+'</td><td><span class="status '+(x.published?"paid":"")+'">'+(x.published?"Published":"Draft")+'</span></td><td><button class="table-action" data-publish="'+x.id+'" data-student="'+x.student_id+'" data-state="'+(!x.published)+'">'+(x.published?"Unpublish":"Publish")+'</button></td></tr>').join("")+
+    '</tbody></table></div>';
+  box.querySelectorAll("[data-publish]").forEach(button=>button.onclick=async()=>{
+    const published=button.dataset.state==="true",studentId=button.dataset.student;
+    const r1=await supabase.from("result_records").update({published}).eq("student_id",studentId).eq("session_id",sessionId).eq("term_id",termId);
+    if(r1.error){alert(r1.error.message);return;}
+    const r2=await supabase.from("result_summaries").update({published}).eq("id",button.dataset.publish);
+    if(r2.error){alert(r2.error.message);return;}
+    renderAdmin();
+  });
+}
+
 async function parentView(){
   const {data:links,error}=await supabase.from("parent_students").select("student_id,students(id,full_name,admission_number,classes(name))").eq("parent_id",user.id);
   if(error)throw error;
@@ -136,7 +163,7 @@ async function renderParent(){
   const ids=window.parentLinks.map(x=>x.student_id),sessionId=document.getElementById("session").value,termId=document.getElementById("term").value,box=document.getElementById("parent-results");
   if(!ids.length){box.innerHTML='<div class="empty-state">No children are linked to this parent account.</div>';return;}
   const [r,s]=await Promise.all([
-    supabase.from("result_records").select("student_id,ca_score,exam_score,total_score,grade,subjects(name)").in("student_id",ids).eq("session_id",sessionId).eq("term_id",termId).eq("published",true).order("subjects(name)"),
+    supabase.from("result_records").select("student_id,ca_score,exam_score,total_score,grade,subjects(name)").in("student_id",ids).eq("session_id",sessionId).eq("term_id",termId).eq("published",true),
     supabase.from("result_summaries").select("student_id,average,position,teacher_remark").in("student_id",ids).eq("session_id",sessionId).eq("term_id",termId).eq("published",true)
   ]);
   if(r.error||s.error){box.innerHTML='<div class="empty-state">'+esc((r.error||s.error).message)+'</div>';return;}
