@@ -111,10 +111,10 @@ async function saveSheet(){
   const by={};(scores||[]).forEach(r=>(by[r.student_id]??=[]).push(Number(r.total_score)));
   const complete=Object.entries(by).filter(([,v])=>v.length>=subjects.length).map(([id,v])=>({id,average:v.reduce((a,b)=>a+b,0)/subjects.length})).sort((a,b)=>b.average-a.average);
   const ranks=new Map();let prev=null,rank=0;complete.forEach((x,i)=>{if(x.average!==prev)rank=i+1;ranks.set(x.id,rank);prev=x.average;});
-  const summaries=complete.map(x=>({student_id:x.id,session_id:sessionId,term_id:termId,class_id:classId,average:Number(x.average.toFixed(2)),position:ranks.get(x.id),published:false}));
+  const summaries=complete.map(x=>({student_id:x.id,session_id:sessionId,term_id:termId,class_id:classId,average:Number(x.average.toFixed(2)),position:ranks.get(x.id)}));
   const current=summaries.find(x=>x.student_id===studentId);
   if(current)current.teacher_remark=teacherRemark;
-  else summaries.push({student_id:studentId,session_id:sessionId,term_id:termId,class_id:classId,average:Number((payload.reduce((a,r)=>a+r.total_score,0)/Math.max(payload.length,1)).toFixed(2)),position:null,teacher_remark:teacherRemark,published:false});
+  else summaries.push({student_id:studentId,session_id:sessionId,term_id:termId,class_id:classId,average:Number((payload.reduce((a,r)=>a+r.total_score,0)/Math.max(payload.length,1)).toFixed(2)),position:null,teacher_remark:teacherRemark});
   const {error:summaryError}=await supabase.from("result_summaries").upsert(summaries,{onConflict:"student_id,session_id,term_id"});
   button.disabled=false;
   if(summaryError){msg.textContent=summaryError.message;msg.className="form-message error";return;}
