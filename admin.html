@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Admin Dashboard — Covenant Crest Academy</title>
+<link rel="stylesheet" href="./src/css/styles.css">
+</head>
+<body class="app-body">
+<div class="app-shell">
+<aside class="sidebar" id="sidebar">
+<a class="sidebar-brand" href="./admin.html"><img src="./public/images/logo.jpg" alt=""><span>Covenant Crest<br>Academy</span></a>
+<nav id="admin-nav">
+<a class="active" href="#overview">Overview</a>
+<a href="#students">Students</a>
+<a href="#classes">Classes</a>
+<a href="#fees">School Fees</a>
+<a href="#payments">Payments</a>
+<a href="#results">Results</a>
+<a href="#parents">Parents</a>
+</nav>
+<button id="logout" class="sidebar-logout">Sign out</button>
+</aside>
+<div class="app-main">
+<header class="app-header">
+<button id="menu-toggle" class="icon-button" aria-label="Open menu">☰</button>
+<div><p class="eyebrow">Administration</p><h1 id="page-title">Dashboard</h1></div>
+<div class="user-chip"><span id="user-name">Admin</span><small>ADMIN</small></div>
+</header>
+<main id="admin-content" class="app-content"></main>
+</div>
+</div>
+<script type="module" src="./src/js/admin.js"></script>
+</body>
+</html>
