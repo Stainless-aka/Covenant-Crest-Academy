@@ -17,6 +17,19 @@ using (teacher_id=auth.uid());
 create policy teacher_classes_admin on public.teacher_classes for all to authenticated
 using (public.current_role()='admin') with check (public.current_role()='admin');
 
+-- Role helper is security-definer so RLS policies can safely inspect profiles.
+create or replace function public.current_role()
+returns public.user_role
+language sql
+stable
+security definer
+set search_path=''
+as $
+  select p.role from public.profiles p where p.id=(select auth.uid());
+$;
+revoke execute on function public.current_role() from public,anon;
+grant execute on function public.current_role() to authenticated;
+
 -- Parent self-signup creates a parent profile automatically.
 create or replace function public.handle_new_user()
 returns trigger
