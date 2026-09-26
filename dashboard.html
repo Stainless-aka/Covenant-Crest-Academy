@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Covenant Crest Academy</title>
+  <link rel="stylesheet" href="./src/css/styles.css">
+</head>
+<body class="app-body">
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="sidebar-brand" href="./dashboard.html">
+        <img src="./public/images/logo.jpg" alt="">
+        <span>Covenant Crest<br>Academy</span>
+      </a>
+      <nav id="app-nav"></nav>
+      <button id="logout" class="sidebar-logout">Sign out</button>
+    </aside>
+
+    <div class="app-main">
+      <header class="app-header">
+        <button id="menu-toggle" class="icon-button" aria-label="Open menu">☰</button>
+        <div>
+          <p class="eyebrow">School Portal</p>
+          <h1 id="page-title">Dashboard</h1>
+        </div>
+        <div class="user-chip">
+          <span id="user-name">User</span>
+          <small id="user-role">Role</small>
+        </div>
+      </header>
+
+      <main id="app-content" class="app-content"></main>
+    </div>
+  </div>
+  <script type="module" src="./src/js/dashboard.js"></script>
+</body>
+</html>
