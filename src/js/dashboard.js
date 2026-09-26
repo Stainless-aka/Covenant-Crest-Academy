@@ -22,6 +22,11 @@ async function init() {
     user = await requireUser();
     profile = await getProfile(user.id);
 
+    if (profile.role === "admin") {
+      window.location.href = "./admin.html";
+      return;
+    }
+
     userName.textContent = profile.full_name;
     userRole.textContent = profile.role.toUpperCase();
     renderNav(profile.role);
