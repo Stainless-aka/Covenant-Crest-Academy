@@ -70,7 +70,7 @@ async function classes(){
  const by={};(assigns.data||[]).forEach(x=>(by[x.class_id]??=[]).push(x.teacher_id));
  content.innerHTML='<div class="page-actions"><div><p class="eyebrow">Academic Structure</p><h2>Classes</h2></div><button class="btn btn-primary" id="add">Add Class</button></div>'+
  '<div class="table-wrap"><table><thead><tr><th>Class</th><th>Teachers</th><th></th></tr></thead><tbody>'+
- (r.data||[]).map(c=>'<tr><td><strong>'+esc(c.name)+'</strong></td><td>'+ (t.data||[]).filter(x=>(by[c.id]||[]).includes(x.id)).map(x=>esc(x.full_name)).join(", ")||"None")+'</td><td><button class="table-action" data-edit="'+c.id+'">Manage</button></td></tr>').join("")+'</tbody></table></div><div id="modal-root"></div>';
+ (r.data||[]).map(c=>'<tr><td><strong>'+esc(c.name)+'</strong></td><td>'+ (t.data||[]).filter(x=>(by[c.id]||[]).includes(x.id)).map(x=>esc(x.full_name)).join(", ")||"None"+'</td><td><button class="table-action" data-edit="'+c.id+'">Manage</button></td></tr>').join("")+'</tbody></table></div><div id="modal-root"></div>';
  document.getElementById("add").onclick=()=>classModal();
  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>classModal(b.dataset.edit));
 }
