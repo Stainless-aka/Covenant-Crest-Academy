@@ -63,7 +63,7 @@ async function loadStudents(){
   if(!classId)return;
   const {data,error}=await supabase.from("students").select("id,full_name,admission_number").eq("class_id",classId).order("full_name");
   if(error)return showError(error);
-  select.innerHTML+==(data||[]).map(s=>'<option value="'+s.id+'">'+esc(s.full_name)+(s.admission_number?" — "+esc(s.admission_number):"")+'</option>').join("");
+  select.innerHTML+=(data||[]).map(s=>'<option value="'+s.id+'">'+esc(s.full_name)+(s.admission_number?" — "+esc(s.admission_number):"")+'</option>').join("");
 }
 
 async function loadSheet(){
