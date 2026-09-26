@@ -30,7 +30,9 @@ A plain HTML/CSS/JavaScript MVP for Covenant Crest Academy.
 
 1. Create a Supabase project.
 2. Open `supabase/schema.sql` in the Supabase SQL Editor and run it.
-3. In `src/js/config.js`, replace the placeholder Supabase URL and anon key.
+3. Open `supabase/migration_mvp.sql` and run it to enable class-scoped teacher access.
+4. Open `supabase/results_mvp.sql` and run it to add result summaries, ranking, publishing, and result-specific RLS.
+5. In `src/js/config.js`, replace the placeholder Supabase URL and anon key.
 4. Serve the folder with a local web server. Do not open `index.html` directly with `file://`.
 
 Example:
@@ -54,6 +56,26 @@ Then insert a matching row in `profiles` with:
 - role: `admin`, `teacher`, or `parent`
 
 For a production application, replace manual profile setup with an admin-controlled user invitation/onboarding flow.
+
+## End-of-term results workflow
+
+```text
+Teacher selects session + term + class + student
+        ↓
+Enter CA (40) + Exam (60) per subject
+        ↓
+Total + Grade + Subject Remark calculated
+        ↓
+Save Result Sheet as draft
+        ↓
+Result Summary calculates Average + Position
+        ↓
+Admin reviews and publishes
+        ↓
+Parent sees the published result
+```
+
+The dedicated result interface is `results.html`. Teachers can only enter results for classes assigned to them. Parents can only read published results belonging to their linked children.
 
 ## MVP data model
 
