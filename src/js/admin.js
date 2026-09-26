@@ -25,7 +25,7 @@ async function route(){
   if(r==="classes")return classes();
   if(r==="fees")return fees();
   if(r==="payments")return payments();
-  if(r==="results")return results();
+  if(r==="results"){window.location.href="./results.html";return;}
   if(r==="parents")return parents();
   return overview();
 }
