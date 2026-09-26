@@ -62,6 +62,11 @@ function renderNav(role) {
 
   nav.querySelectorAll("a").forEach(a => {
     a.addEventListener("click", async (e) => {
+      if (a.dataset.route === "results") {
+        e.preventDefault();
+        window.location.href = "./results.html";
+        return;
+      }
       e.preventDefault();
       location.hash = a.dataset.route;
       await route();
