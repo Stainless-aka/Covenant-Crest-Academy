@@ -14,9 +14,6 @@ const esc = (value = "") =>
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
   }[c]));
 
-const money = value =>
-  new Intl.NumberFormat("en-NG", { style:"currency", currency:"NGN", maximumFractionDigits:0 }).format(Number(value || 0));
-
 async function init() {
   try {
     user = await requireUser();
@@ -42,7 +39,6 @@ function renderNav(role) {
     admin: [
       ["overview", "Overview"],
       ["students", "Students"],
-      ["fees", "School Fees"],
       ["results", "Results"]
     ],
     teacher: [
@@ -84,7 +80,6 @@ async function route() {
     routeName[0].toUpperCase() + routeName.slice(1);
 
   if (routeName === "students" && profile.role === "admin") return studentsPage();
-  if (routeName === "fees") return feesPage();
   if (routeName === "results") return resultsPage();
   return overviewPage();
 }
@@ -93,7 +88,6 @@ async function overviewPage() {
   if (profile.role === "admin") {
     const [{ count: students }, { count: payments }, { count: results }] = await Promise.all([
       supabase.from("students").select("*", { count:"exact", head:true }),
-      supabase.from("payments").select("*", { count:"exact", head:true }),
       supabase.from("result_records").select("*", { count:"exact", head:true })
     ]);
 
@@ -105,7 +99,6 @@ async function overviewPage() {
       </div>
       <div class="stat-grid">
         <div class="stat-card"><span>Students</span><strong>${students ?? 0}</strong></div>
-        <div class="stat-card"><span>Payments</span><strong>${payments ?? 0}</strong></div>
         <div class="stat-card"><span>Result Entries</span><strong>${results ?? 0}</strong></div>
       </div>`;
     return;
@@ -130,7 +123,7 @@ async function overviewPage() {
   content.innerHTML = `
     <div class="welcome"><div><p class="eyebrow">Parent Portal</p>
     <h2>Welcome, ${esc(profile.full_name)}.</h2>
-    <p>View your children's school information, fees and published results.</p></div></div>
+    <p>View your children's school information and published results.</p></div></div>
     <div class="section-heading compact"><h2>My Children</h2></div>
     <div class="student-grid">
       ${(links || []).map(x => `
@@ -205,55 +198,6 @@ async function openStudentModal() {
     document.getElementById("modal-root").innerHTML = "";
     studentsPage();
   };
-}
-
-async function feesPage() {
-  if (profile.role === "parent") {
-    const { data: links, error: linkError } = await supabase
-      .from("parent_students")
-      .select("student_id")
-      .eq("parent_id", user.id);
-    if (linkError) throw linkError;
-    window.parentStudentIds = (links || []).map(x => x.student_id);
-    if (!window.parentStudentIds.length) {
-      content.innerHTML = '<div class="section-heading"><p class="eyebrow">Finance</p><h2>School Fees</h2></div><div class="empty-state">No children are linked to this parent account yet.</div>';
-      return;
-    }
-    const { data, error } = await supabase
-      .from("fee_assignments")
-      .select("id, amount_due, amount_paid, balance, fee_structures(description, term, academic_sessions(name)), students!inner(id, full_name)")
-       .in("student_id", window.parentStudentIds)
-      .order("created_at", { ascending:false });
-    if (error) throw error;
-    content.innerHTML = `
-      <div class="section-heading"><p class="eyebrow">Finance</p><h2>School Fees</h2></div>
-      <div class="fee-grid">${(data || []).map(f => `
-        <article class="fee-card">
-          <p class="muted">${esc(f.students.full_name)}</p>
-          <h3>${esc(f.fee_structures?.description || "School Fee")}</h3>
-          <small>${esc(f.fee_structures?.term || "")} · ${esc(f.fee_structures?.academic_sessions?.name || "")}</small>
-          <div class="fee-row"><span>Due</span><strong>${money(f.amount_due)}</strong></div>
-          <div class="fee-row"><span>Paid</span><strong>${money(f.amount_paid)}</strong></div>
-          <div class="fee-row balance"><span>Balance</span><strong>${money(f.balance)}</strong></div>
-        </article>`).join("") || `<div class="empty-state">No fee assignments found.</div>`}</div>`;
-    return;
-  }
-
-  const { data, error } = await supabase
-    .from("payments")
-    .select("*, students(full_name), fee_structures(description, term)")
-    .order("paid_at", { ascending:false });
-  if (error) throw error;
-
-  content.innerHTML = `
-    <div class="section-heading"><p class="eyebrow">Finance</p><h2>Payment Records</h2></div>
-    <div class="table-wrap"><table><thead><tr><th>Student</th><th>Fee</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
-    <tbody>${(data || []).map(p => `<tr>
-      <td>${esc(p.students?.full_name || "—")}</td>
-      <td>${esc(p.fee_structures?.description || "—")}</td>
-      <td>${money(p.amount)}</td><td><span class="status ${p.status}">${esc(p.status)}</span></td>
-      <td>${p.paid_at ? new Date(p.paid_at).toLocaleDateString("en-NG") : "—"}</td>
-    </tr>`).join("") || `<tr><td colspan="5">No payments recorded.</td></tr>`}</tbody></table></div>`;
 }
 
 async function resultsPage() {
