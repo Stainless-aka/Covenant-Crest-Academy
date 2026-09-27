@@ -163,8 +163,7 @@ function linkModal(parents,students,links){
  };
 }
 async function results(){
- const current=(await supabase.from("academic_sessions").select("id,is_current,name").order("name",{ascending:false})).data||[];
- const termsList=(await supabase.from("terms").select("id,name").order("name")).data||[];
+ const { sessions: current, terms: termsList } = await getReferenceData();
  const sessionId=current.find(x=>x.is_current)?.id||current[0]?.id||"";
  const termId=termsList[0]?.id||"";
  content.innerHTML='<div class="section-heading"><p class="eyebrow">Administration</p><h2>Result Review</h2><p class="muted">Review teacher-submitted result sheets before they are published to parents.</p></div>'+
@@ -211,7 +210,7 @@ async function reviewAdminResult(summaryId,studentId,sessionId,termId,published)
 }
 
 function showError(e){content.innerHTML='<div class="empty-state">'+esc(e.message)+'</div>';}
-document.getElementById("logout").onclick=async()=>{await supabase.auth.signOut();location.href="./login.html";};
+document.getElementById("logout").onclick=async()=>{clearPortalCache();await supabase.auth.signOut();location.href="./login.html";};
 document.getElementById("menu-toggle").onclick=()=>document.getElementById("sidebar").classList.toggle("open");
 window.addEventListener("hashchange",route);
 init();
