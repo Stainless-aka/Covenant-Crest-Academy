@@ -164,3 +164,15 @@ tr:last-child td{border-bottom:0}
 .site-footer{content-visibility:auto;contain-intrinsic-size:120px;}
 
 .teacher-assignment{display:grid;gap:9px}.field-label{font-size:13px;font-weight:700}.teacher-checklist{display:grid;gap:8px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px}.teacher-option{display:flex;grid-template-columns:none;flex-direction:row;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;background:#f8fafc;font-weight:600}.teacher-option input{width:auto;margin:0}.teacher-option:hover{background:#eef4f8}.empty-state.compact{padding:16px;text-align:left}
+
+/* Teacher dashboard class cards */
+.teacher-class-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:20px;margin-bottom:8px}
+.teacher-class-card{position:relative;display:flex;flex-direction:column;min-height:190px;padding:24px;background:#fff;border:1px solid var(--line);border-radius:18px;box-shadow:0 8px 24px rgba(6,52,93,.06);overflow:hidden;transition:transform .2s,box-shadow .2s,border-color .2s}
+.teacher-class-card::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:linear-gradient(90deg,var(--navy),var(--gold))}
+.teacher-class-card:hover{transform:translateY(-3px);box-shadow:0 14px 32px rgba(6,52,93,.11);border-color:#d6e0e9}
+.teacher-class-card .avatar{width:52px;height:52px;border-radius:14px;background:#edf4fa;font-size:18px;margin-bottom:18px}
+.teacher-class-card h3{margin:0 0 7px;font-size:20px;color:var(--navy)}
+.teacher-class-card p{margin:0;color:var(--muted);font-size:13px}
+.teacher-class-card .class-count{font-weight:700;color:var(--ink)}
+.teacher-class-card .table-action{margin-top:auto;align-self:flex-start;padding:9px 13px;background:#f7fafc}
+@media(max-width:520px){.teacher-class-grid{grid-template-columns:1fr}.teacher-class-card{min-height:175px}}
