@@ -123,13 +123,74 @@ async function overviewPage() {
   }
 
   if (profile.role === "teacher") {
+    const { data: assignments, error: assignmentError } = await supabase
+      .from("teacher_classes")
+      .select("class_id, classes(id, name)")
+      .eq("teacher_id", user.id);
+
+    if (assignmentError) throw assignmentError;
+
+    const assignedClasses = (assignments || []).map(x => x.classes).filter(Boolean);
+    const classIds = assignedClasses.map(c => c.id);
+
+    let students = [];
+    if (classIds.length) {
+      const { data, error } = await supabase
+        .from("students")
+        .select("id, full_name, admission_number, class_id, classes(name)")
+        .in("class_id", classIds)
+        .order("full_name");
+
+      if (error) throw error;
+      students = data || [];
+    }
+
     content.innerHTML = `
-      <div class="welcome"><div><p class="eyebrow">Teacher Portal</p>
-      <h2>Welcome, ${esc(profile.full_name)}.</h2>
-      <p>Enter and review academic results for your students.</p></div></div>
-      <div class="quick-grid">
-        <a class="quick-card" href="#results"><span>Results</span><strong>Enter scores →</strong></a>
-      </div>`;
+      <div class="welcome">
+        <div>
+          <p class="eyebrow">Teacher Portal</p>
+          <h2>Welcome, ${esc(profile.full_name)}.</h2>
+          <p>You can only access students in classes assigned to you.</p>
+        </div>
+      </div>
+
+      <div class="stat-grid">
+        <div class="stat-card"><span>Assigned Classes</span><strong>${assignedClasses.length}</strong></div>
+        <div class="stat-card"><span>Your Students</span><strong>${students.length}</strong></div>
+      </div>
+
+      <div class="section-heading compact">
+        <h2>My Classes</h2>
+      </div>
+
+      <div class="student-grid">
+        ${assignedClasses.map(c => `
+          <article class="student-card">
+            <div class="avatar">${esc((c.name || "?")[0])}</div>
+            <div>
+              <h3>${esc(c.name)}</h3>
+              <p>${students.filter(s => s.class_id === c.id).length} student(s)</p>
+              <a class="table-action" href="./results.html">Enter Results →</a>
+            </div>
+          </article>`).join("") ||
+          '<div class="empty-state">No classes have been assigned to your account yet.</div>'}
+      </div>
+
+      ${students.length ? `
+        <div class="section-heading compact"><h2>My Students</h2></div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Admission No.</th><th>Class</th></tr></thead>
+            <tbody>
+              ${students.map(s => `<tr>
+                <td><strong>${esc(s.full_name)}</strong></td>
+                <td>${esc(s.admission_number || "—")}</td>
+                <td>${esc(s.classes?.name || "—")}</td>
+              </tr>`).join("")}
+            </tbody>
+          </table>
+        </div>` : ""}
+    `;
     return;
   }
 
