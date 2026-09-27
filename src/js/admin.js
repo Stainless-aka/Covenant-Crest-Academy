@@ -64,26 +64,59 @@ async function classes(){
  if(r.error)return showError(r.error);
  const assigns=await supabase.from("teacher_classes").select("teacher_id,class_id");
  const by={};(assigns.data||[]).forEach(x=>(by[x.class_id]??=[]).push(x.teacher_id));
- content.innerHTML='<div class="page-actions"><div><p class="eyebrow">Academic Structure</p><h2>Classes</h2></div><button class="btn btn-primary" id="add">Add Class</button></div>'+
- '<div class="table-wrap"><table><thead><tr><th>Class</th><th>Teachers</th><th></th></tr></thead><tbody>'+
- (r.data||[]).map(c=>'<tr><td><strong>'+esc(c.name)+'</strong></td><td>'+ (t.data||[]).filter(x=>(by[c.id]||[]).includes(x.id)).map(x=>esc(x.full_name)).join(", ")||"None"+'</td><td><button class="table-action" data-edit="'+c.id+'">Manage</button></td></tr>').join("")+'</tbody></table></div><div id="modal-root"></div>';
- document.getElementById("add").onclick=()=>classModal();
- document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>classModal(b.dataset.edit));
+ const teacherById={};(t.data||[]).forEach(x=>teacherById[x.id]=x.full_name);
+ content.innerHTML='<div class="page-actions"><div><p class="eyebrow">Academic Structure</p><h2>Classes</h2><p class="muted">Create classes and assign a teacher to each class.</p></div><button class="btn btn-primary" id="add">Add Class</button></div>'+
+ '<div class="table-wrap"><table><thead><tr><th>Class</th><th>Teacher</th><th></th></tr></thead><tbody>'+
+ (r.data||[]).map(c=>{const ids=by[c.id]||[];const names=ids.map(id=>teacherById[id]).filter(Boolean);return '<tr><td><strong>'+esc(c.name)+'</strong></td><td>'+esc(names[0]||"Not assigned")+'</td><td><button class="table-action" data-assign="'+c.id+'">Assign Teacher</button></td></tr>';}).join("")+'</tbody></table></div><div id="modal-root"></div>';
+ document.getElementById("add").onclick=()=>addClassModal(t.data||[]);
+ document.querySelectorAll("[data-assign]").forEach(b=>b.onclick=()=>assignTeacherModal(b.dataset.assign));
 }
-async function classModal(id){
- const cr=await supabase.from("classes").select("*").eq("id",id).single();
- const tr=await supabase.from("profiles").select("id,full_name").eq("role","teacher").order("full_name");
- const ar=await supabase.from("teacher_classes").select("teacher_id").eq("class_id",id);
- const selected=(ar.data||[]).map(x=>x.teacher_id);
- const current=cr.data;
- document.getElementById("modal-root").innerHTML='<div class="modal-backdrop"><form class="modal" id="form"><button type="button" class="modal-close" id="close">×</button><p class="eyebrow">Teacher Assignment</p><h2>Assign Teacher(s)</h2>'+
- '<p class="muted">Class: <strong>'+esc(current?.name||"")+'</strong></p>'+
- '<div class="teacher-assignment"><span class="field-label">Teachers for this class</span><div class="teacher-checklist">'+
- (tr.data||[]).map(x=>'<label class="teacher-option"><input type="checkbox" name="teacher_ids" value="'+x.id+'" '+(selected.includes(x.id)?"checked":"")+'><span>'+esc(x.full_name)+'</span></label>').join("")+
- '</div></div>'+
- '<small class="muted">Select one or more teachers. Saving will replace the current teacher assignments for this class.</small><button class="btn btn-primary btn-block">Save Assignment</button><div id="msg" class="form-message"></div></form></div>';
+function addClassModal(teachers){
+ document.getElementById("modal-root").innerHTML='<div class="modal-backdrop"><form class="modal" id="form"><button type="button" class="modal-close" id="close">×</button><p class="eyebrow">Class Management</p><h2>Add Class</h2>'+
+ '<label>Class name<input name="name" placeholder="e.g. Primary 7" required></label>'+
+ '<label>Assign teacher<select name="teacher_id"><option value="">No teacher yet</option>'+teachers.map(x=>'<option value="'+x.id+'">'+esc(x.full_name)+'</option>').join("")+'</select></label>'+
+ '<small class="muted">You can assign a teacher now or assign one later from the Classes list.</small>'+
+ '<button class="btn btn-primary btn-block">Add Class</button><div id="msg" class="form-message"></div></form></div>';
  document.getElementById("close").onclick=()=>document.getElementById("modal-root").innerHTML="";
- document.getElementById("form").onsubmit=async e=>{e.preventDefault();const ids=[...e.target.querySelectorAll('input[name="teacher_ids"]:checked')].map(x=>x.value);const msg=document.getElementById("msg");const del=await supabase.from("teacher_classes").delete().eq("class_id",id);if(del.error){msg.textContent=del.error.message;msg.className="form-message error";return;}if(ids.length){const add=await supabase.from("teacher_classes").insert(ids.map(teacher_id=>({teacher_id,class_id:id})));if(add.error){msg.textContent=add.error.message;msg.className="form-message error";return;}}document.getElementById("modal-root").innerHTML="";classes();};
+ document.getElementById("form").onsubmit=async e=>{
+   e.preventDefault();
+   const fd=new FormData(e.target);
+   const name=String(fd.get("name")||"").trim();
+   const teacherId=String(fd.get("teacher_id")||"");
+   const msg=document.getElementById("msg");
+   const r=await supabase.from("classes").insert({name}).select().single();
+   if(r.error){msg.textContent=r.error.message;msg.className="form-message error";return;}
+   if(teacherId){
+     const add=await supabase.from("teacher_classes").insert({teacher_id:teacherId,class_id:r.data.id});
+     if(add.error){msg.textContent=add.error.message;msg.className="form-message error";return;}
+   }
+   document.getElementById("modal-root").innerHTML="";
+   classes();
+ };
+}
+async function assignTeacherModal(classId){
+ const cr=await supabase.from("classes").select("id,name").eq("id",classId).single();
+ const tr=await supabase.from("profiles").select("id,full_name").eq("role","teacher").order("full_name");
+ const ar=await supabase.from("teacher_classes").select("teacher_id").eq("class_id",classId).limit(1);
+ const selected=ar.data?.[0]?.teacher_id||"";
+ if(cr.error)return showError(cr.error);
+ document.getElementById("modal-root").innerHTML='<div class="modal-backdrop"><form class="modal" id="form"><button type="button" class="modal-close" id="close">×</button><p class="eyebrow">Teacher Assignment</p><h2>Assign Teacher</h2>'+
+ '<p class="muted">Class: <strong>'+esc(cr.data.name)+'</strong></p>'+
+ '<label>Teacher<select name="teacher_id" required><option value="">Select teacher</option>'+tr.data.map(x=>'<option value="'+x.id+'" '+(x.id===selected?"selected":"")+'>'+esc(x.full_name)+'</option>').join("")+'</select></label>'+
+ '<small class="muted">Selecting a new teacher will replace the current teacher for this class.</small>'+
+ '<button class="btn btn-primary btn-block">Save Assignment</button><div id="msg" class="form-message"></div></form></div>';
+ document.getElementById("close").onclick=()=>document.getElementById("modal-root").innerHTML="";
+ document.getElementById("form").onsubmit=async e=>{
+   e.preventDefault();
+   const teacherId=new FormData(e.target).get("teacher_id");
+   const msg=document.getElementById("msg");
+   const del=await supabase.from("teacher_classes").delete().eq("class_id",classId);
+   if(del.error){msg.textContent=del.error.message;msg.className="form-message error";return;}
+   const add=await supabase.from("teacher_classes").insert({teacher_id:teacherId,class_id:classId});
+   if(add.error){msg.textContent=add.error.message;msg.className="form-message error";return;}
+   document.getElementById("modal-root").innerHTML="";
+   classes();
+ };
 }
 async function parents(){
  const [p,s,l]=await Promise.all([supabase.from("profiles").select("id,full_name,email").eq("role","parent").order("full_name"),supabase.from("students").select("id,full_name,admission_number").order("full_name"),supabase.from("parent_students").select("parent_id,student_id")]);
