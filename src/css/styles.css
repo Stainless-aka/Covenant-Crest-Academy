@@ -157,3 +157,6 @@ tr:last-child td{border-bottom:0}
 .report-footer strong{color:var(--ink)}
 @media(max-width:900px){.result-toolbar{grid-template-columns:1fr 1fr}.result-summary-form{grid-template-columns:1fr}}
 @media(max-width:560px){.result-toolbar{grid-template-columns:1fr}.result-sheet-header,.report-card-head,.report-footer{flex-direction:column}.report-stat{width:100%;text-align:left}}
+
+.section{content-visibility:auto;contain-intrinsic-size:500px;}
+.site-footer{content-visibility:auto;contain-intrinsic-size:120px;}
