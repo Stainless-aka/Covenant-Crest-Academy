@@ -192,25 +192,29 @@ function linkModal(parents,students,links){
  };
 }
 async function results(){
- const { sessions: current, terms: termsList } = await getReferenceData();
+ const { sessions: current, terms: termsList, classes: classesList } = await getReferenceData({classes:true});
  const sessionId=current.find(x=>x.is_current)?.id||current[0]?.id||"";
  const termId=termsList[0]?.id||"";
  content.innerHTML='<div class="section-heading"><p class="eyebrow">Administration</p><h2>Result Review</h2><p class="muted">Review teacher-submitted result sheets before they are published to parents.</p></div>'+
  '<div class="result-toolbar"><label>Academic Session<select id="result-session"><option value="">Select</option>'+current.map(x=>'<option value="'+x.id+'" '+(x.id===sessionId?"selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select></label>'+
- '<label>Term<select id="result-term"><option value="">Select</option>'+termsList.map(x=>'<option value="'+x.id+'" '+(x.id===termId?"selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select></label></div><div id="admin-results"></div>';
+ '<label>Term<select id="result-term"><option value="">Select</option>'+termsList.map(x=>'<option value="'+x.id+'" '+(x.id===termId?"selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select></label>'+
+ '<label>Class<select id="result-class"><option value="">All Classes</option>'+classesList.map(x=>'<option value="'+x.id+'">'+esc(x.name)+'</option>').join("")+'</select></label></div><div id="admin-results"></div>';
  document.getElementById("result-session").onchange=renderAdminResults;
  document.getElementById("result-term").onchange=renderAdminResults;
+ document.getElementById("result-class").onchange=renderAdminResults;
  await renderAdminResults();
 }
 async function renderAdminResults(){
- const sessionId=document.getElementById("result-session").value,termId=document.getElementById("result-term").value,box=document.getElementById("admin-results");
+ const sessionId=document.getElementById("result-session").value,termId=document.getElementById("result-term").value,classId=document.getElementById("result-class").value,box=document.getElementById("admin-results");
  if(!sessionId||!termId){box.innerHTML='<div class="empty-state">Select an academic session and term.</div>';return;}
- const {data,error}=await supabase.from("result_summaries").select("id,student_id,average,position,teacher_remark,published,submitted_for_review,submitted_at,students(full_name,admission_number,classes(name))").eq("session_id",sessionId).eq("term_id",termId).order("submitted_for_review",{ascending:false}).order("average",{ascending:false});
+ let query=supabase.from("result_summaries").select("id,student_id,average,position,teacher_remark,published,submitted_for_review,submitted_at,class_id,students(full_name,admission_number,classes(name))").eq("session_id",sessionId).eq("term_id",termId);
+ if(classId)query=query.eq("class_id",classId);
+ const {data,error}=await query.order("submitted_for_review",{ascending:false}).order("average",{ascending:false});
  if(error){box.innerHTML='<div class="empty-state">'+esc(error.message)+'</div>';return;}
  const pending=(data||[]).filter(x=>x.submitted_for_review&&!x.published).length;
  box.innerHTML='<div class="review-banner"><div><strong>'+pending+' result sheet'+(pending===1?"":"s")+' awaiting review</strong><span>Teachers must submit results before they can be published to parents.</span></div></div>'+
  '<div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Average</th><th>Position</th><th>Status</th><th>Action</th></tr></thead><tbody>'+
- (data||[]).map(x=>{const status=x.published?"Published":x.submitted_for_review?"Awaiting Review":"Draft";return '<tr><td><strong>'+esc(x.students?.full_name)+'</strong><br><small>'+esc(x.students?.admission_number||"")+'</small></td><td>'+esc(x.students?.classes?.name||"—")+'</td><td>'+Number(x.average).toFixed(1)+'%</td><td>'+ (x.position?x.position+ordinal(x.position):"—")+'</td><td><span class="status '+(x.published?"paid":x.submitted_for_review?"review-status":"")+'">'+status+'</span></td><td><button class="table-action" data-review="'+x.id+'" data-student="'+x.student_id+'" data-published="'+x.published+'">'+(x.published?"View":"Review")+'</button></td></tr>';}).join("")+
+ ((data||[]).length?(data||[]).map(x=>{const status=x.published?"Published":x.submitted_for_review?"Awaiting Review":"Draft";return '<tr><td><strong>'+esc(x.students?.full_name)+'</strong><br><small>'+esc(x.students?.admission_number||"")+'</small></td><td>'+esc(x.students?.classes?.name||"—")+'</td><td>'+Number(x.average).toFixed(1)+'%</td><td>'+ (x.position?x.position+ordinal(x.position):"—")+'</td><td><span class="status '+(x.published?"paid":x.submitted_for_review?"review-status":"")+'">'+status+'</span></td><td><button class="table-action" data-review="'+x.id+'" data-student="'+x.student_id+'" data-published="'+x.published+'">'+(x.published?"View":"Review")+'</button></td></tr>';}).join(""):'<tr><td colspan="6"><div class="empty-state">No result sheets found for the selected filters.</div></td></tr>')+
  '</tbody></table></div><div id="review-modal-root"></div>';
  box.querySelectorAll("[data-review]").forEach(button=>button.onclick=()=>reviewAdminResult(button.dataset.review,button.dataset.student,sessionId,termId,button.dataset.published==="true"));
 }
