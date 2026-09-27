@@ -162,3 +162,5 @@ tr:last-child td{border-bottom:0}
 
 .section{content-visibility:auto;contain-intrinsic-size:500px;}
 .site-footer{content-visibility:auto;contain-intrinsic-size:120px;}
+
+.teacher-assignment{display:grid;gap:9px}.field-label{font-size:13px;font-weight:700}.teacher-checklist{display:grid;gap:8px;max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:10px;padding:10px}.teacher-option{display:flex;grid-template-columns:none;flex-direction:row;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;background:#f8fafc;font-weight:600}.teacher-option input{width:auto;margin:0}.teacher-option:hover{background:#eef4f8}.empty-state.compact{padding:16px;text-align:left}
