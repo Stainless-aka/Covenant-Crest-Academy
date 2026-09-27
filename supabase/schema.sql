@@ -58,40 +58,6 @@ create table if not exists public.parent_students (
   primary key (parent_id, student_id)
 );
 
-create table if not exists public.fee_structures (
-  id uuid primary key default gen_random_uuid(),
-  class_id uuid references public.classes(id) on delete set null,
-  session_id uuid references public.academic_sessions(id) on delete cascade,
-  term_id uuid references public.terms(id) on delete cascade,
-  description text not null,
-  amount numeric(12,2) not null check (amount >= 0),
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.fee_assignments (
-  id uuid primary key default gen_random_uuid(),
-  student_id uuid not null references public.students(id) on delete cascade,
-  parent_id uuid references public.profiles(id) on delete set null,
-  fee_structure_id uuid references public.fee_structures(id) on delete set null,
-  amount_due numeric(12,2) not null default 0 check (amount_due >= 0),
-  amount_paid numeric(12,2) not null default 0 check (amount_paid >= 0),
-  balance numeric(12,2) generated always as (greatest(amount_due - amount_paid, 0)) stored,
-  created_at timestamptz not null default now()
-);
-
-create table if not exists public.payments (
-  id uuid primary key default gen_random_uuid(),
-  student_id uuid not null references public.students(id) on delete cascade,
-  parent_id uuid references public.profiles(id) on delete set null,
-  fee_structure_id uuid references public.fee_structures(id) on delete set null,
-  amount numeric(12,2) not null check (amount > 0),
-  reference text unique,
-  payment_method text not null default 'manual',
-  status text not null default 'pending' check (status in ('pending','paid','failed','refunded')),
-  paid_at timestamptz,
-  created_at timestamptz not null default now()
-);
-
 create table if not exists public.result_records (
   id uuid primary key default gen_random_uuid(),
   student_id uuid not null references public.students(id) on delete cascade,
@@ -227,40 +193,6 @@ using (parent_id = auth.uid() or public.current_role() = 'admin');
 
 create policy "admins manage parent links"
 on public.parent_students for all to authenticated
-using (public.current_role() = 'admin')
-with check (public.current_role() = 'admin');
-
-create policy "authenticated read fee structures"
-on public.fee_structures for select to authenticated using (true);
-
-create policy "admins manage fee structures"
-on public.fee_structures for all to authenticated
-using (public.current_role() = 'admin')
-with check (public.current_role() = 'admin');
-
-create policy "parents read own fee assignments"
-on public.fee_assignments for select to authenticated
-using (parent_id = auth.uid());
-
-create policy "admin teacher read fee assignments"
-on public.fee_assignments for select to authenticated
-using (public.current_role() in ('admin','teacher'));
-
-create policy "admins manage fee assignments"
-on public.fee_assignments for all to authenticated
-using (public.current_role() = 'admin')
-with check (public.current_role() = 'admin');
-
-create policy "parents read own payments"
-on public.payments for select to authenticated
-using (parent_id = auth.uid());
-
-create policy "admin read payments"
-on public.payments for select to authenticated
-using (public.current_role() = 'admin');
-
-create policy "admins manage payments"
-on public.payments for all to authenticated
 using (public.current_role() = 'admin')
 with check (public.current_role() = 'admin');
 
