@@ -18,12 +18,13 @@ async function init(){
 }
 async function route(){
   const r=location.hash.replace("#","")||"overview";
-  nav.querySelectorAll("a").forEach(a=>a.classList.toggle("active",a.getAttribute("href")==="#"+r));
-  title.textContent={overview:"Dashboard",students:"Students",classes:"Classes",results:"Results",parents:"Parents"}[r]||"Dashboard";
-  if(r==="students")return students();
-  if(r==="classes")return classes();
-  if(r==="results"){window.location.href="./results.html";return;}
-  if(r==="parents")return parents();
+  const page = r === "results.html" ? "results" : r;
+  nav.querySelectorAll("a").forEach(a=>a.classList.toggle("active",a.getAttribute("href")==="#"+page || (page==="results" && a.getAttribute("href")==="./results.html")));
+  title.textContent={overview:"Dashboard",students:"Students",classes:"Classes",results:"Results",parents:"Parents"}[page]||"Dashboard";
+  if(page==="students")return students();
+  if(page==="classes")return classes();
+  if(page==="results")return results();
+  if(page==="parents")return parents();
   return overview();
 }
 async function overview(){
@@ -159,12 +160,53 @@ function linkModal(parents,students,links){
  };
 }
 async function results(){
- const r=await supabase.from("result_records").select("id,total_score,grade,published,students(full_name),subjects(name),terms(name),academic_sessions(name)").order("created_at",{ascending:false}).limit(200);
- content.innerHTML='<div class="section-heading"><p class="eyebrow">Academics</p><h2>Result Publishing</h2></div>'+
- '<div class="table-wrap"><table><thead><tr><th>Student</th><th>Subject</th><th>Term</th><th>Total</th><th>Grade</th><th>Status</th><th></th></tr></thead><tbody>'+
- (r.data||[]).map(x=>'<tr><td>'+esc(x.students?.full_name)+'</td><td>'+esc(x.subjects?.name)+'</td><td>'+esc(x.terms?.name)+'</td><td>'+x.total_score+'</td><td>'+esc(x.grade)+'</td><td>'+ (x.published?"Published":"Draft")+'</td><td><button class="table-action" data-id="'+x.id+'" data-next="'+(!x.published)+'">'+(x.published?"Unpublish":"Publish")+'</button></td></tr>').join("")+'</tbody></table></div>';
- document.querySelectorAll("[data-id]").forEach(b=>b.onclick=async()=>{const e=await supabase.from("result_records").update({published:b.dataset.next==="true"}).eq("id",b.dataset.id);if(e.error)alert(e.error.message);else results();});
+ const current=(await supabase.from("academic_sessions").select("id,is_current,name").order("name",{ascending:false})).data||[];
+ const termsList=(await supabase.from("terms").select("id,name").order("name")).data||[];
+ const sessionId=current.find(x=>x.is_current)?.id||current[0]?.id||"";
+ const termId=termsList[0]?.id||"";
+ content.innerHTML='<div class="section-heading"><p class="eyebrow">Administration</p><h2>Result Review</h2><p class="muted">Review teacher-submitted result sheets before they are published to parents.</p></div>'+
+ '<div class="result-toolbar"><label>Academic Session<select id="result-session"><option value="">Select</option>'+current.map(x=>'<option value="'+x.id+'" '+(x.id===sessionId?"selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select></label>'+
+ '<label>Term<select id="result-term"><option value="">Select</option>'+termsList.map(x=>'<option value="'+x.id+'" '+(x.id===termId?"selected":"")+'>'+esc(x.name)+'</option>').join("")+'</select></label></div><div id="admin-results"></div>';
+ document.getElementById("result-session").onchange=renderAdminResults;
+ document.getElementById("result-term").onchange=renderAdminResults;
+ await renderAdminResults();
 }
+async function renderAdminResults(){
+ const sessionId=document.getElementById("result-session").value,termId=document.getElementById("result-term").value,box=document.getElementById("admin-results");
+ if(!sessionId||!termId){box.innerHTML='<div class="empty-state">Select an academic session and term.</div>';return;}
+ const {data,error}=await supabase.from("result_summaries").select("id,student_id,average,position,teacher_remark,published,submitted_for_review,submitted_at,students(full_name,admission_number,classes(name))").eq("session_id",sessionId).eq("term_id",termId).order("submitted_for_review",{ascending:false}).order("average",{ascending:false});
+ if(error){box.innerHTML='<div class="empty-state">'+esc(error.message)+'</div>';return;}
+ const pending=(data||[]).filter(x=>x.submitted_for_review&&!x.published).length;
+ box.innerHTML='<div class="review-banner"><div><strong>'+pending+' result sheet'+(pending===1?"":"s")+' awaiting review</strong><span>Teachers must submit results before they can be published to parents.</span></div></div>'+
+ '<div class="table-wrap"><table><thead><tr><th>Student</th><th>Class</th><th>Average</th><th>Position</th><th>Status</th><th>Action</th></tr></thead><tbody>'+
+ (data||[]).map(x=>{const status=x.published?"Published":x.submitted_for_review?"Awaiting Review":"Draft";return '<tr><td><strong>'+esc(x.students?.full_name)+'</strong><br><small>'+esc(x.students?.admission_number||"")+'</small></td><td>'+esc(x.students?.classes?.name||"—")+'</td><td>'+Number(x.average).toFixed(1)+'%</td><td>'+ (x.position?x.position+ordinal(x.position):"—")+'</td><td><span class="status '+(x.published?"paid":x.submitted_for_review?"review-status":"")+'">'+status+'</span></td><td><button class="table-action" data-review="'+x.id+'" data-student="'+x.student_id+'" data-published="'+x.published+'">'+(x.published?"View":"Review")+'</button></td></tr>';}).join("")+
+ '</tbody></table></div><div id="review-modal-root"></div>';
+ box.querySelectorAll("[data-review]").forEach(button=>button.onclick=()=>reviewAdminResult(button.dataset.review,button.dataset.student,sessionId,termId,button.dataset.published==="true"));
+}
+async function reviewAdminResult(summaryId,studentId,sessionId,termId,published){
+ const [{data:summary,error:summaryError},{data:rows,error:rowsError}]=await Promise.all([
+  supabase.from("result_summaries").select("average,position,teacher_remark,published,students(full_name,admission_number,classes(name))").eq("id",summaryId).single(),
+  supabase.from("result_records").select("ca_score,exam_score,total_score,grade,remark,subjects(name)").eq("student_id",studentId).eq("session_id",sessionId).eq("term_id",termId).order("subjects(name)")
+ ]);
+ if(summaryError||rowsError){alert((summaryError||rowsError).message);return;}
+ document.getElementById("review-modal-root").innerHTML='<div class="modal-backdrop"><div class="modal review-modal"><button type="button" class="modal-close" id="review-close">×</button><p class="eyebrow">Result Review</p><h2>'+esc(summary.students?.full_name)+'</h2><p class="muted">'+esc(summary.students?.classes?.name||"Class")+' · Average '+Number(summary.average).toFixed(1)+'% · Position '+(summary.position?summary.position+ordinal(summary.position):"—")+'</p><div class="table-wrap"><table><thead><tr><th>Subject</th><th>CA</th><th>Exam</th><th>Total</th><th>Grade</th><th>Remark</th></tr></thead><tbody>'+
+ (rows||[]).map(r=>'<tr><td>'+esc(r.subjects?.name)+'</td><td>'+r.ca_score+'</td><td>'+r.exam_score+'</td><td><strong>'+r.total_score+'</strong></td><td>'+esc(r.grade)+'</td><td>'+esc(r.remark)+'</td></tr>').join("")+
+ '</tbody></table></div><div class="review-remark"><strong>Teacher\'s Overall Remark</strong><p>'+esc(summary.teacher_remark||"No overall remark provided.")+'</p></div>'+
+ (published?'<div class="review-footer"><span class="status paid">Published to parents</span><button class="btn btn-light" id="review-close-2">Close</button></div>':'<div class="review-footer"><span class="muted">Publishing makes this result visible to the linked parent account.</span><button class="btn btn-primary" id="publish-reviewed">Publish to Parents</button></div>')+
+ '</div></div>';
+ document.getElementById("review-close").onclick=()=>document.getElementById("review-modal-root").innerHTML="";
+ document.getElementById("review-close-2")?.addEventListener("click",()=>document.getElementById("review-modal-root").innerHTML="");
+ document.getElementById("publish-reviewed")?.addEventListener("click",async()=>{
+  const button=document.getElementById("publish-reviewed");button.disabled=true;button.textContent="Publishing...";
+  const r1=await supabase.from("result_records").update({published:true}).eq("student_id",studentId).eq("session_id",sessionId).eq("term_id",termId);
+  if(r1.error){alert(r1.error.message);button.disabled=false;button.textContent="Publish to Parents";return;}
+  const r2=await supabase.from("result_summaries").update({published:true,reviewed_at:new Date().toISOString(),reviewed_by:user.id}).eq("id",summaryId);
+  if(r2.error){alert(r2.error.message);button.disabled=false;button.textContent="Publish to Parents";return;}
+  document.getElementById("review-modal-root").innerHTML="";
+  renderAdminResults();
+ });
+}
+
 function showError(e){content.innerHTML='<div class="empty-state">'+esc(e.message)+'</div>';}
 document.getElementById("logout").onclick=async()=>{await supabase.auth.signOut();location.href="./login.html";};
 document.getElementById("menu-toggle").onclick=()=>document.getElementById("sidebar").classList.toggle("open");
