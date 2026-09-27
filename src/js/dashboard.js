@@ -209,10 +209,20 @@ async function openStudentModal() {
 
 async function feesPage() {
   if (profile.role === "parent") {
+    const { data: links, error: linkError } = await supabase
+      .from("parent_students")
+      .select("student_id")
+      .eq("parent_id", user.id);
+    if (linkError) throw linkError;
+    window.parentStudentIds = (links || []).map(x => x.student_id);
+    if (!window.parentStudentIds.length) {
+      content.innerHTML = '<div class="section-heading"><p class="eyebrow">Finance</p><h2>School Fees</h2></div><div class="empty-state">No children are linked to this parent account yet.</div>';
+      return;
+    }
     const { data, error } = await supabase
       .from("fee_assignments")
       .select("id, amount_due, amount_paid, balance, fee_structures(description, term, academic_sessions(name)), students!inner(id, full_name)")
-      .eq("parent_id", user.id)
+       .in("student_id", window.parentStudentIds)
       .order("created_at", { ascending:false });
     if (error) throw error;
     content.innerHTML = `
@@ -248,10 +258,20 @@ async function feesPage() {
 
 async function resultsPage() {
   if (profile.role === "parent") {
+    const { data: links, error: linkError } = await supabase
+      .from("parent_students")
+      .select("student_id")
+      .eq("parent_id", user.id);
+    if (linkError) throw linkError;
+    const studentIds = (links || []).map(x => x.student_id);
+    if (!studentIds.length) {
+      content.innerHTML = '<div class="section-heading"><p class="eyebrow">Academics</p><h2>Published Results</h2></div><div class="empty-state">No children are linked to this parent account yet.</div>';
+      return;
+    }
     const { data, error } = await supabase
       .from("result_records")
       .select("*, students!inner(full_name), subjects(name), terms(name), academic_sessions(name)")
-      .eq("students.parent_id", user.id)
+      .in("student_id", studentIds)
       .eq("published", true)
       .order("created_at", { ascending:false });
     if (error) throw error;
