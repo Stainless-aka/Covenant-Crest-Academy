@@ -239,6 +239,5 @@ async function reviewAdminResult(summaryId,studentId,sessionId,termId,published)
 
 function showError(e){content.innerHTML='<div class="empty-state">'+esc(e.message)+'</div>';}
 document.getElementById("logout").onclick=async()=>{clearPortalCache();await supabase.auth.signOut();location.href="./login.html";};
-document.getElementById("menu-toggle").onclick=()=>document.getElementById("sidebar").classList.toggle("open");
 window.addEventListener("hashchange",route);
 init();
