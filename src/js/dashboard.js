@@ -47,7 +47,6 @@ function renderNav(role) {
     ],
     parent: [
       ["overview", "Overview"],
-      ["fees", "School Fees"],
       ["results", "Results"]
     ]
   }[role] || [];
@@ -86,7 +85,7 @@ async function route() {
 
 async function overviewPage() {
   if (profile.role === "admin") {
-    const [{ count: students }, { count: payments }, { count: results }] = await Promise.all([
+    const [{ count: students }, { count: results }] = await Promise.all([
       supabase.from("students").select("*", { count:"exact", head:true }),
       supabase.from("result_records").select("*", { count:"exact", head:true })
     ]);
