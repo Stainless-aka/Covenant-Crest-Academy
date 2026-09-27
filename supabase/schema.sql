@@ -105,9 +105,6 @@ alter table public.academic_sessions enable row level security;
 alter table public.terms enable row level security;
 alter table public.students enable row level security;
 alter table public.parent_students enable row level security;
-alter table public.fee_structures enable row level security;
-alter table public.fee_assignments enable row level security;
-alter table public.payments enable row level security;
 alter table public.result_records enable row level security;
 
 create or replace function public.current_role()
