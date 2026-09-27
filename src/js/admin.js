@@ -35,6 +35,7 @@ document.addEventListener("keydown",e=>{
 
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 const grade=v=>v>=80?"A":v>=70?"B":v>=60?"C":v>=50?"D":"F";
+const ordinal=n=>n%100>=11&&n%100<=13?"th":({1:"st",2:"nd",3:"rd"}[n%10]||"th");
 
 async function init(){
   user=await requireUser();
