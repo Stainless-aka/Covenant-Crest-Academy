@@ -122,7 +122,7 @@ async function paymentModal(){
  '<label>Method<select name="payment_method"><option>manual</option><option>cash</option><option>bank_transfer</option><option>paystack</option></select></label>'+
  '<button class="btn btn-primary btn-block">Save Payment</button><div id="msg" class="form-message"></div></form></div>';
  document.getElementById("close").onclick=()=>document.getElementById("modal-root").innerHTML="";
- document.getElementById("form").onsubmit=async e=>{e.preventDefault();const p=Object.fromEntries(new FormData(e.target).entries());p.amount=Number(p.amount);p.status="paid";p.paid_at=new Date().toISOString();const st=await supabase.from("students").select("parent_id").eq("id",p.student_id).single();p.parent_id=st.data?.parent_id||null;const r=await supabase.from("payments").insert(p);if(r.error){document.getElementById("msg").textContent=r.error.message;return;}if(p.fee_structure_id){const a=await supabase.from("fee_assignments").select("id,amount_paid").eq("student_id",p.student_id).eq("fee_structure_id",p.fee_structure_id).maybeSingle();if(a.data)await supabase.from("fee_assignments").update({amount_paid:Number(a.data.amount_paid||0)+p.amount}).eq("id",a.data.id);}document.getElementById("modal-root").innerHTML="";payments();};
+ document.getElementById("form").onsubmit=async e=>{e.preventDefault();const p=Object.fromEntries(new FormData(e.target).entries());p.amount=Number(p.amount);p.status="paid";p.paid_at=new Date().toISOString();const r=await supabase.from("payments").insert(p);if(r.error){document.getElementById("msg").textContent=r.error.message;return;}if(p.fee_structure_id){const a=await supabase.from("fee_assignments").select("id,amount_paid").eq("student_id",p.student_id).eq("fee_structure_id",p.fee_structure_id).maybeSingle();if(a.data)await supabase.from("fee_assignments").update({amount_paid:Number(a.data.amount_paid||0)+p.amount}).eq("id",a.data.id);}document.getElementById("modal-root").innerHTML="";payments();};
 }
 async function parents(){
  const [p,s,l]=await Promise.all([supabase.from("profiles").select("id,full_name,email").eq("role","parent").order("full_name"),supabase.from("students").select("id,full_name,admission_number").order("full_name"),supabase.from("parent_students").select("parent_id,student_id")]);
@@ -159,8 +159,6 @@ function linkModal(parents,students,links){
    if(selected.length){
      const add=await supabase.from("parent_students").upsert(selected.map(student_id=>({parent_id:parentId,student_id})),{onConflict:"parent_id,student_id"});
      if(add.error){msg.textContent=add.error.message;return;}
-     const sync=await supabase.from("students").update({parent_id:parentId}).in("id",selected);
-     if(sync.error){msg.textContent=sync.error.message;return;}
    }
    document.getElementById("modal-root").innerHTML="";
    parents();
