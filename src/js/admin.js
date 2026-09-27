@@ -71,18 +71,19 @@ async function classes(){
  document.querySelectorAll("[data-edit]").forEach(b=>b.onclick=()=>classModal(b.dataset.edit));
 }
 async function classModal(id){
- const cr=id?await supabase.from("classes").select("*").eq("id",id).single():{data:null};
+ const cr=await supabase.from("classes").select("*").eq("id",id).single();
  const tr=await supabase.from("profiles").select("id,full_name").eq("role","teacher").order("full_name");
- const ar=id?await supabase.from("teacher_classes").select("teacher_id").eq("class_id",id):{data:[]};
+ const ar=await supabase.from("teacher_classes").select("teacher_id").eq("class_id",id);
  const selected=(ar.data||[]).map(x=>x.teacher_id);
- document.getElementById("modal-root").innerHTML='<div class="modal-backdrop"><form class="modal" id="form"><button type="button" class="modal-close" id="close">×</button><p class="eyebrow">Class Management</p><h2>'+(id?"Manage":"Add")+' Class</h2>'+
- '<label>Class name<input name="name" value="'+esc(cr.data?.name||"")+'" required></label>'+
- '<div class="teacher-assignment"><span class="field-label">Assign teacher(s)</span><div class="teacher-checklist">'+
+ const current=cr.data;
+ document.getElementById("modal-root").innerHTML='<div class="modal-backdrop"><form class="modal" id="form"><button type="button" class="modal-close" id="close">×</button><p class="eyebrow">Teacher Assignment</p><h2>Assign Teacher(s)</h2>'+
+ '<p class="muted">Class: <strong>'+esc(current?.name||"")+'</strong></p>'+
+ '<div class="teacher-assignment"><span class="field-label">Teachers for this class</span><div class="teacher-checklist">'+
  (tr.data||[]).map(x=>'<label class="teacher-option"><input type="checkbox" name="teacher_ids" value="'+x.id+'" '+(selected.includes(x.id)?"checked":"")+'><span>'+esc(x.full_name)+'</span></label>').join("")+
  '</div></div>'+
- '<small class="muted">Select one or more teachers who should manage this class.</small><button class="btn btn-primary btn-block">Save</button><div id="msg" class="form-message"></div></form></div>';
+ '<small class="muted">Select one or more teachers. Saving will replace the current teacher assignments for this class.</small><button class="btn btn-primary btn-block">Save Assignment</button><div id="msg" class="form-message"></div></form></div>';
  document.getElementById("close").onclick=()=>document.getElementById("modal-root").innerHTML="";
- document.getElementById("form").onsubmit=async e=>{e.preventDefault();const fd=new FormData(e.target);const name=String(fd.get("name")||"").trim();const ids=[...e.target.querySelectorAll("input[name=\"teacher_ids\"]:checked")].map(x=>x.value);const r=id?await supabase.from("classes").update({name}).eq("id",id).select().single():await supabase.from("classes").insert({name}).select().single();const msg=document.getElementById("msg");if(r.error){msg.textContent=r.error.message;msg.className="form-message error";return;}const cid=id||r.data.id;const del=await supabase.from("teacher_classes").delete().eq("class_id",cid);if(del.error){msg.textContent=del.error.message;msg.className="form-message error";return;}if(ids.length){const add=await supabase.from("teacher_classes").insert(ids.map(teacher_id=>({teacher_id,class_id:cid})));if(add.error){msg.textContent=add.error.message;msg.className="form-message error";return;}}document.getElementById("modal-root").innerHTML="";classes();};
+ document.getElementById("form").onsubmit=async e=>{e.preventDefault();const ids=[...e.target.querySelectorAll('input[name="teacher_ids"]:checked')].map(x=>x.value);const msg=document.getElementById("msg");const del=await supabase.from("teacher_classes").delete().eq("class_id",id);if(del.error){msg.textContent=del.error.message;msg.className="form-message error";return;}if(ids.length){const add=await supabase.from("teacher_classes").insert(ids.map(teacher_id=>({teacher_id,class_id:id})));if(add.error){msg.textContent=add.error.message;msg.className="form-message error";return;}}document.getElementById("modal-root").innerHTML="";classes();};
 }
 async function parents(){
  const [p,s,l]=await Promise.all([supabase.from("profiles").select("id,full_name,email").eq("role","parent").order("full_name"),supabase.from("students").select("id,full_name,admission_number").order("full_name"),supabase.from("parent_students").select("parent_id,student_id")]);
