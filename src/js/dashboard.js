@@ -353,6 +353,7 @@ async function resultsPage() {
 }
 
 document.getElementById("logout").onclick = async () => {
+  clearPortalCache();
   await supabase.auth.signOut();
   window.location.href = "./login.html";
 };
