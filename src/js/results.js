@@ -216,6 +216,6 @@ async function renderParent(){
 }
 
 function showError(e){content.innerHTML='<div class="empty-state">'+esc(e.message)+'</div>';}
-document.getElementById("logout").onclick=async()=>{await supabase.auth.signOut();location.href="./login.html";};
+document.getElementById("logout").onclick=async()=>{clearPortalCache();await supabase.auth.signOut();location.href="./login.html";};
 document.getElementById("menu-toggle").onclick=()=>document.getElementById("sidebar").classList.toggle("open");
 init().catch(showError);
