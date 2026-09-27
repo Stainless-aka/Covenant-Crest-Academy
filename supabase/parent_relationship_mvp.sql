@@ -31,3 +31,20 @@ using (
 -- Helpful index for parent-scoped payment/fee lookups.
 create index if not exists idx_parent_students_student_parent
 on public.parent_students(student_id, parent_id);
+
+
+-- Remove the legacy students.parent_id relationship from parent authorization.
+-- Existing values may remain for backward compatibility, but they are no longer trusted.
+drop policy if exists "parent read own students" on public.students;
+drop policy if exists "parent read own students" on public.students;
+drop policy if exists "parent read own students" on public.students;
+create policy "parents read linked students"
+on public.students for select to authenticated
+using (
+  public.current_role() = 'parent'
+  and exists (
+    select 1 from public.parent_students ps
+    where ps.parent_id = auth.uid()
+      and ps.student_id = students.id
+  )
+);
