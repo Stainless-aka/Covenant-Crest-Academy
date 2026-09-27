@@ -127,18 +127,44 @@ async function paymentModal(){
 async function parents(){
  const [p,s,l]=await Promise.all([supabase.from("profiles").select("id,full_name,email").eq("role","parent").order("full_name"),supabase.from("students").select("id,full_name,admission_number").order("full_name"),supabase.from("parent_students").select("parent_id,student_id")]);
  const map={};(l.data||[]).forEach(x=>(map[x.parent_id]??=[]).push(x.student_id));
- content.innerHTML='<div class="page-actions"><div><p class="eyebrow">Parent Management</p><h2>Parents & Children</h2></div><button class="btn btn-primary" id="add">Link Child</button></div>'+
+ content.innerHTML='<div class="page-actions"><div><p class="eyebrow">Parent Management</p><h2>Parents & Children</h2></div><button class="btn btn-primary" id="add">Manage Children</button></div>'+
  '<div class="table-wrap"><table><thead><tr><th>Parent</th><th>Email</th><th>Children</th></tr></thead><tbody>'+
  (p.data||[]).map(x=>'<tr><td><strong>'+esc(x.full_name)+'</strong></td><td>'+esc(x.email||"—")+'</td><td>'+((map[x.id]||[]).map(id=>(s.data||[]).find(y=>y.id===id)?.full_name).filter(Boolean).map(esc).join(", ")||"No child linked")+'</td></tr>').join("")+'</tbody></table></div><div id="modal-root"></div>';
- document.getElementById("add").onclick=()=>linkModal(p.data||[],s.data||[]);
+ document.getElementById("add").onclick=()=>linkModal(p.data||[],s.data||[],l.data||[]);
 }
-function linkModal(parents,students){
- document.getElementById("modal-root").innerHTML='<div class="modal-backdrop"><form class="modal" id="form"><button type="button" class="modal-close" id="close">×</button><p class="eyebrow">Parent Relationship</p><h2>Link Child</h2>'+
- '<label>Parent<select name="parent_id" required><option value="">Select</option>'+parents.map(x=>'<option value="'+x.id+'">'+esc(x.full_name)+' — '+esc(x.email||"")+'</option>').join("")+'</select></label>'+
- '<label>Student<select name="student_id" required><option value="">Select</option>'+students.map(x=>'<option value="'+x.id+'">'+esc(x.full_name)+' — '+esc(x.admission_number||"")+'</option>').join("")+'</select></label>'+
- '<button class="btn btn-primary btn-block">Link</button><div id="msg" class="form-message"></div></form></div>';
+function linkModal(parents,students,links){
+ const selectedByParent={};(links||[]).forEach(x=>(selectedByParent[x.parent_id]??=[]).push(x.student_id));
+ document.getElementById("modal-root").innerHTML='<div class="modal-backdrop"><form class="modal" id="form"><button type="button" class="modal-close" id="close">×</button><p class="eyebrow">Parent Relationship</p><h2>Manage Parent Children</h2>'+
+ '<label>Parent<select name="parent_id" id="parent_id" required><option value="">Select parent</option>'+parents.map(x=>'<option value="'+x.id+'">'+esc(x.full_name)+' — '+esc(x.email||"")+'</option>').join("")+'</select></label>'+
+ '<label>Children<select name="student_ids" id="student_ids" multiple size="8">'+students.map(x=>'<option value="'+x.id+'">'+esc(x.full_name)+' — '+esc(x.admission_number||"")+'</option>').join("")+'</select></label>'+
+ '<small class="muted">Select all children who belong to this parent. Hold Ctrl/Cmd to select multiple.</small>'+
+ '<button class="btn btn-primary btn-block">Save Children</button><div id="msg" class="form-message"></div></form></div>';
+ const parentSelect=document.getElementById("parent_id");
+ const studentSelect=document.getElementById("student_ids");
+ const syncSelection=()=>{const ids=new Set(selectedByParent[parentSelect.value]||[]);[...studentSelect.options].forEach(o=>o.selected=ids.has(o.value));};
+ parentSelect.onchange=syncSelection;
  document.getElementById("close").onclick=()=>document.getElementById("modal-root").innerHTML="";
- document.getElementById("form").onsubmit=async e=>{e.preventDefault();const p=Object.fromEntries(new FormData(e.target).entries());const r=await supabase.from("parent_students").upsert(p,{onConflict:"parent_id,student_id"});if(r.error){document.getElementById("msg").textContent=r.error.message;return;}await supabase.from("students").update({parent_id:p.parent_id}).eq("id",p.student_id);document.getElementById("modal-root").innerHTML="";parents();};
+ document.getElementById("form").onsubmit=async e=>{
+   e.preventDefault();
+   const parentId=parentSelect.value;
+   const selected=[...studentSelect.selectedOptions].map(o=>o.value);
+   const msg=document.getElementById("msg");
+   if(!parentId){msg.textContent="Please select a parent.";return;}
+   const current=selectedByParent[parentId]||[];
+   const removed=current.filter(id=>!selected.includes(id));
+   if(removed.length){
+     const del=await supabase.from("parent_students").delete().eq("parent_id",parentId).in("student_id",removed);
+     if(del.error){msg.textContent=del.error.message;return;}
+   }
+   if(selected.length){
+     const add=await supabase.from("parent_students").upsert(selected.map(student_id=>({parent_id:parentId,student_id})),{onConflict:"parent_id,student_id"});
+     if(add.error){msg.textContent=add.error.message;return;}
+     const sync=await supabase.from("students").update({parent_id:parentId}).in("id",selected);
+     if(sync.error){msg.textContent=sync.error.message;return;}
+   }
+   document.getElementById("modal-root").innerHTML="";
+   parents();
+ };
 }
 async function results(){
  const r=await supabase.from("result_records").select("id,total_score,grade,published,students(full_name),subjects(name),terms(name),academic_sessions(name)").order("created_at",{ascending:false}).limit(200);
