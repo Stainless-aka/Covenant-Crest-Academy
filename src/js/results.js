@@ -22,11 +22,14 @@ async function init() {
     : '<a href="./dashboard.html">Dashboard</a><a class="active" href="./results.html">Results</a>';
 
   if (profile.role === "teacher") {
-    const [{ sessions: sessionData, terms: termData, subjects: subjectData }, { data: assignments, error }] = await Promise.all([
+    const [{ sessions: sessionData, terms: termData, subjects: subjectData }, { data: assignments, error: assignmentError }] = await Promise.all([
       getReferenceData({ subjects: true }),
-      getTeacherAssignments(user.id)
+      supabase
+        .from("teacher_classes")
+        .select("class_id,classes(id,name)")
+        .eq("teacher_id", user.id)
     ]);
-    if (error) throw error;
+    if (assignmentError) throw assignmentError;
     sessions = sessionData || [];
     terms = termData || [];
     subjects = subjectData || [];
