@@ -3,7 +3,35 @@ import { supabase, requireUser, getProfile, getReferenceData, clearPortalCache }
 const content=document.getElementById("admin-content");
 const title=document.getElementById("page-title");
 const nav=document.getElementById("admin-nav");
+const sidebar=document.getElementById("sidebar");
+const sidebarOverlay=document.getElementById("sidebar-overlay");
+const sidebarClose=document.getElementById("sidebar-close");
+const menuToggle=document.getElementById("menu-toggle");
 let user,profile;
+
+function closeSidebar(){
+  sidebar?.classList.remove("open");
+  sidebarOverlay?.classList.remove("open");
+  sidebarOverlay?.setAttribute("aria-hidden","true");
+  menuToggle?.setAttribute("aria-label","Open menu");
+}
+
+function openSidebar(){
+  sidebar?.classList.add("open");
+  sidebarOverlay?.classList.add("open");
+  sidebarOverlay?.setAttribute("aria-hidden","false");
+  menuToggle?.setAttribute("aria-label","Close menu");
+}
+
+sidebarClose?.addEventListener("click",closeSidebar);
+sidebarOverlay?.addEventListener("click",closeSidebar);
+menuToggle?.addEventListener("click",()=>{
+  if(sidebar?.classList.contains("open")) closeSidebar();
+  else openSidebar();
+});
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape") closeSidebar();
+});
 
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));
 const grade=v=>v>=80?"A":v>=70?"B":v>=60?"C":v>=50?"D":"F";
@@ -13,7 +41,7 @@ async function init(){
   profile=await getProfile(user.id);
   if(profile.role!=="admin"){ window.location.href="./dashboard.html"; return; }
   document.getElementById("user-name").textContent=profile.full_name;
-  nav.querySelectorAll("a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();location.hash=a.getAttribute("href");route();}));
+  nav.querySelectorAll("a").forEach(a=>a.addEventListener("click",e=>{e.preventDefault();closeSidebar();location.hash=a.getAttribute("href");route();}));
   await route();
 }
 async function route(){
