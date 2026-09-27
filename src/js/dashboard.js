@@ -5,6 +5,10 @@ const title = document.getElementById("page-title");
 const userName = document.getElementById("user-name");
 const userRole = document.getElementById("user-role");
 const nav = document.getElementById("app-nav");
+const sidebar = document.getElementById("sidebar");
+const sidebarOverlay = document.getElementById("sidebar-overlay");
+const sidebarClose = document.getElementById("sidebar-close");
+const menuToggle = document.getElementById("menu-toggle");
 
 let user;
 let profile;
@@ -34,6 +38,20 @@ async function init() {
   }
 }
 
+function closeSidebar() {
+  sidebar.classList.remove("open");
+  sidebarOverlay.classList.remove("open");
+  sidebarOverlay.setAttribute("aria-hidden", "true");
+  menuToggle.setAttribute("aria-label", "Open menu");
+}
+
+function openSidebar() {
+  sidebar.classList.add("open");
+  sidebarOverlay.classList.add("open");
+  sidebarOverlay.setAttribute("aria-hidden", "false");
+  menuToggle.setAttribute("aria-label", "Close menu");
+}
+
 function renderNav(role) {
   const links = {
     admin: [
@@ -57,6 +75,7 @@ function renderNav(role) {
 
   nav.querySelectorAll("a").forEach(a => {
     a.addEventListener("click", async (e) => {
+      closeSidebar();
       if (a.dataset.route === "results") {
         e.preventDefault();
         window.location.href = "./results.html";
@@ -268,9 +287,17 @@ document.getElementById("logout").onclick = async () => {
   window.location.href = "./login.html";
 };
 
-document.getElementById("menu-toggle").onclick = () => {
-  document.getElementById("sidebar").classList.toggle("open");
+menuToggle.onclick = () => {
+  if (sidebar.classList.contains("open")) closeSidebar();
+  else openSidebar();
 };
+
+sidebarClose.onclick = closeSidebar;
+sidebarOverlay.onclick = closeSidebar;
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") closeSidebar();
+});
 
 window.addEventListener("hashchange", route);
 init();
