@@ -1,4 +1,4 @@
-import { supabase, requireUser, getProfile, getReferenceData, clearPortalCache } from "./supabase.js";
+import { supabase, requireUser, getProfile, getReferenceData, getTeacherAssignments, getParentLinks, clearPortalCache } from "./supabase.js";
 
 const content = document.getElementById("results-content");
 const userName = document.getElementById("user-name");
@@ -24,7 +24,7 @@ async function init() {
   if (profile.role === "teacher") {
     const [{ sessions: sessionData, terms: termData, subjects: subjectData }, { data: assignments, error }] = await Promise.all([
       getReferenceData({ subjects: true }),
-      supabase.from("teacher_classes").select("class_id,classes(id,name)").eq("teacher_id",user.id)
+      getTeacherAssignments(user.id)
     ]);
     if (error) throw error;
     sessions = sessionData || [];
@@ -48,12 +48,7 @@ const select = (id,label,items,selected="") =>
   '</select></label>';
 
 async function teacherView() {
-  let allowed = classes;
-  if(profile.role === "teacher"){
-    const {data,error}=await supabase.from("teacher_classes").select("class_id,classes(id,name)").eq("teacher_id",user.id);
-    if(error) throw error;
-    allowed=(data||[]).map(x=>x.classes).filter(Boolean);
-  }
+  const allowed = classes;
   if(!allowed.length){content.innerHTML='<div class="empty-state">No classes have been assigned to your account yet.</div>';return;}
   const current=sessions.find(x=>x.is_current)?.id||sessions[0]?.id||"";
   content.innerHTML='<div class="section-heading"><p class="eyebrow">Academics</p><h2>End-of-Term Results</h2><p class="muted">Enter CA and examination scores for a student. Totals and grades are calculated automatically.</p></div>'+
@@ -188,9 +183,7 @@ async function reviewResult(summaryId,studentId,sessionId,termId,published){
 }
 
 async function parentView(){
-  const {data:links,error}=await supabase.from("parent_students").select("student_id,students(id,full_name,admission_number,classes(name))").eq("parent_id",user.id);
-  if(error)throw error;
-  window.parentLinks=links||[];
+  window.parentLinks=await getParentLinks(user.id);
   const current=sessions.find(x=>x.is_current)?.id||sessions[0]?.id||"";
   content.innerHTML='<div class="section-heading"><p class="eyebrow">Parent Portal</p><h2>End-of-Term Results</h2><p class="muted">Only results published by the school are shown here.</p></div>'+
     '<div class="result-toolbar">'+select("session","Academic Session",sessions,current)+select("term","Term",terms,terms[0]?.id||"")+'</div><div id="parent-results"></div>';
