@@ -9,10 +9,8 @@ A plain HTML/CSS/JavaScript MVP for Covenant Crest Academy.
 - Role-based dashboards: Admin, Teacher, Parent
 - Student registration
 - Classes and subjects
-- School fee structures
-- Payment records
 - End-of-term result entry
-- Parent view of fees and published results
+- Parent view of published results
 - Supabase Row Level Security (RLS)
 - School logo and two hero images included
 
@@ -86,19 +84,16 @@ profiles
 
 students
   ├── parent_students
-  ├── fee_assignments
   └── result_records
 
 classes
 subjects
 academic_sessions
 terms
-fee_structures
-payments
 ```
 
 ## Important
 
 The browser must only use the Supabase anon key. Never put a service-role key in frontend JavaScript.
 
-This is an MVP foundation, not a production-ready financial system. Before live payment collection, add server-side payment verification/webhooks and stronger audit controls.
+This is an MVP academic foundation. Before production use, add stronger audit controls and operational safeguards.
