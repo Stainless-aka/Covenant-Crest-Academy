@@ -1,4 +1,4 @@
-import { supabase, requireUser, getProfile, clearPortalCache } from "./supabase.js";
+import { supabase, requireUser, getProfile, getTeacherAssignments, getParentLinks, clearPortalCache } from "./supabase.js";
 
 const content = document.getElementById("app-content");
 const title = document.getElementById("page-title");
@@ -123,13 +123,7 @@ async function overviewPage() {
   }
 
   if (profile.role === "teacher") {
-    const { data: assignments, error: assignmentError } = await supabase
-      .from("teacher_classes")
-      .select("class_id, classes(id, name)")
-      .eq("teacher_id", user.id);
-
-    if (assignmentError) throw assignmentError;
-
+    const assignments = await getTeacherAssignments(user.id);
     const assignedClasses = (assignments || []).map(x => x.classes).filter(Boolean);
     const classIds = assignedClasses.map(c => c.id);
 
@@ -203,10 +197,7 @@ async function overviewPage() {
     return;
   }
 
-  const { data: links } = await supabase
-    .from("parent_students")
-    .select("student_id, students(id, full_name, admission_number, classes(name))")
-    .eq("parent_id", user.id);
+  const links = await getParentLinks(user.id);
 
   content.innerHTML = `
     <div class="welcome"><div><p class="eyebrow">Parent Portal</p>
