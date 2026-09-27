@@ -6,6 +6,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const CACHE_PREFIX = "cca_portal_";
 const PROFILE_TTL = 30 * 1000;
 const REFERENCE_TTL = 5 * 60 * 1000;
+const RELATION_TTL = 60 * 1000;
 
 function readCache(key, ttl) {
   try {
@@ -64,6 +65,32 @@ export async function getProfile(userId) {
     .single();
   if (error) throw error;
   return writeCache(cacheKey, data);
+}
+
+export async function getTeacherAssignments(teacherId) {
+  const cacheKey = "teacher_classes_" + teacherId;
+  const cached = readCache(cacheKey, RELATION_TTL);
+  if (cached) return cached;
+
+  const { data, error } = await supabase
+    .from("teacher_classes")
+    .select("class_id,classes(id,name)")
+    .eq("teacher_id", teacherId);
+  if (error) throw error;
+  return writeCache(cacheKey, data || []);
+}
+
+export async function getParentLinks(parentId) {
+  const cacheKey = "parent_links_" + parentId;
+  const cached = readCache(cacheKey, RELATION_TTL);
+  if (cached) return cached;
+
+  const { data, error } = await supabase
+    .from("parent_students")
+    .select("student_id,students(id,full_name,admission_number,classes(name))")
+    .eq("parent_id", parentId);
+  if (error) throw error;
+  return writeCache(cacheKey, data || []);
 }
 
 export async function getReferenceData(options = {}) {
