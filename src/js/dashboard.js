@@ -1,4 +1,4 @@
-import { supabase, requireUser, getProfile } from "./supabase.js";
+import { supabase, requireUser, getProfile, clearPortalCache } from "./supabase.js";
 
 const content = document.getElementById("app-content");
 const title = document.getElementById("page-title");
