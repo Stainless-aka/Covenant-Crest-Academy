@@ -189,3 +189,16 @@ tr:last-child td{border-bottom:0}
 .class-action:hover{background:#eef4f8;border-color:#cbd8e3}
 @media(max-width:1050px){.teacher-class-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:850px){.teacher-stat-grid{grid-template-columns:1fr}.teacher-class-grid{grid-template-columns:1fr}.section-heading.compact{align-items:flex-start;flex-direction:column}}
+
+/* Result review workflow */
+.result-form-actions{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.review-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;background:#fff8e1;border:1px solid #f0d98b;border-radius:16px;padding:16px 18px;margin-bottom:18px}
+.review-banner strong,.review-banner span{display:block}.review-banner strong{color:#735400;font-size:14px}.review-banner span{color:#806f43;font-size:12px;margin-top:4px}
+.status.review-status{background:#fff3cd;color:#856404}
+.review-modal{width:min(900px,100%);max-height:90vh}
+.review-modal h2{margin-bottom:6px}
+.review-modal .table-wrap{margin:20px 0}
+.review-remark{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:18px}
+.review-remark p{margin:7px 0 0;color:var(--muted);line-height:1.6}
+.review-footer{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:560px){.result-form-actions{width:100%;flex-direction:column}.result-form-actions .btn{width:100%}.review-banner,.review-footer{align-items:flex-start;flex-direction:column}.review-footer .btn{width:100%}}
