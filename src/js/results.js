@@ -1,4 +1,4 @@
-import { supabase, requireUser, getProfile } from "./supabase.js";
+import { supabase, requireUser, getProfile, getReferenceData, clearPortalCache } from "./supabase.js";
 
 const content = document.getElementById("results-content");
 const userName = document.getElementById("user-name");
@@ -16,20 +16,30 @@ async function init() {
   profile = await getProfile(user.id);
   userName.textContent = profile.full_name;
   userRole.textContent = profile.role.toUpperCase();
+
   nav.innerHTML = profile.role === "admin"
     ? '<a href="./admin.html">Dashboard</a><a class="active" href="./results.html">Results</a>'
     : '<a href="./dashboard.html">Dashboard</a><a class="active" href="./results.html">Results</a>';
-  const [s,t,c,sub] = await Promise.all([
-    supabase.from("academic_sessions").select("*").order("name",{ascending:false}),
-    supabase.from("terms").select("*").order("name"),
-    supabase.from("classes").select("*").order("name"),
-    supabase.from("subjects").select("*").order("name")
-  ]);
-  if (s.error || t.error || c.error || sub.error) throw s.error || t.error || c.error || sub.error;
-  sessions=s.data||[]; terms=t.data||[]; classes=c.data||[]; subjects=sub.data||[];
-  if(profile.role === "parent") return parentView();
-  if(profile.role === "admin") return adminView();
-  return teacherView();
+
+  if (profile.role === "teacher") {
+    const [{ sessions: sessionData, terms: termData, subjects: subjectData }, { data: assignments, error }] = await Promise.all([
+      getReferenceData({ subjects: true }),
+      supabase.from("teacher_classes").select("class_id,classes(id,name)").eq("teacher_id",user.id)
+    ]);
+    if (error) throw error;
+    sessions = sessionData || [];
+    terms = termData || [];
+    subjects = subjectData || [];
+    classes = (assignments || []).map(x => x.classes).filter(Boolean);
+    return teacherView();
+  }
+
+  const { sessions: sessionData, terms: termData } = await getReferenceData();
+  sessions = sessionData || [];
+  terms = termData || [];
+
+  if (profile.role === "parent") return parentView();
+  return adminView();
 }
 
 const select = (id,label,items,selected="") =>
