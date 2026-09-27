@@ -195,6 +195,102 @@ async function parentView(){
   renderParent();
 }
 
+let pdfLibraryPromise;
+let logoDataPromise;
+
+function loadPdfLibrary(){
+  if(pdfLibraryPromise)return pdfLibraryPromise;
+  pdfLibraryPromise=new Promise((resolve,reject)=>{
+    if(window.jspdf?.jsPDF && window.jspdf?.jsPDF.API?.autoTable){resolve(window.jspdf.jsPDF);return;}
+    const scripts=[
+      ["https://cdn.jsdelivr.net/npm/jspdf@3.0.3/dist/jspdf.umd.min.js","jspdf"],
+      ["https://cdn.jsdelivr.net/npm/jspdf-autotable@5.0.2/dist/jspdf.plugin.autotable.min.js","autotable"]
+    ];
+    let index=0;
+    const next=()=>{
+      if(index>=scripts.length){window.jspdf?.jsPDF?.API?.autoTable?resolve(window.jspdf.jsPDF):reject(new Error("PDF library could not be loaded."));return;}
+      const [src]=scripts[index++];
+      const script=document.createElement("script");
+      script.src=src;script.async=true;script.onload=next;script.onerror=()=>reject(new Error("PDF library could not be loaded."));
+      document.head.appendChild(script);
+    };
+    next();
+  });
+  return pdfLibraryPromise;
+}
+
+function loadLogoData(){
+  if(logoDataPromise)return logoDataPromise;
+  logoDataPromise=new Promise(resolve=>{
+    const img=new Image();
+    img.onload=()=>{
+      try{
+        const canvas=document.createElement("canvas");
+        canvas.width=img.naturalWidth;canvas.height=img.naturalHeight;
+        canvas.getContext("2d").drawImage(img,0,0);
+        resolve(canvas.toDataURL("image/jpeg",0.9));
+      }catch{resolve(null);}
+    };
+    img.onerror=()=>resolve(null);
+    img.src="./public/images/logo.jpg";
+  });
+  return logoDataPromise;
+}
+
+function safeFileName(value){
+  return String(value||"result").replace(/[^a-z0-9]+/gi,"-").replace(/^-+|-+$/g,"").toLowerCase();
+}
+
+async function downloadResultPdf(student,rows,summary,sessionId,termId,button){
+  const original=button.textContent;
+  button.disabled=true;button.textContent="Preparing PDF...";
+  try{
+    const jsPDF=await loadPdfLibrary();
+    const logo=await loadLogoData();
+    const sessionName=sessions.find(x=>x.id===sessionId)?.name||"";
+    const termName=terms.find(x=>x.id===termId)?.name||"";
+    const doc=new jsPDF({unit:"mm",format:"a4"});
+    const pageWidth=doc.internal.pageSize.getWidth();
+    if(logo)doc.addImage(logo,"JPEG",14,12,25,25);
+    doc.setFont("helvetica","bold");doc.setFontSize(18);doc.text("COVENANT CREST ACADEMY",pageWidth/2,18,{align:"center"});
+    doc.setFont("helvetica","normal");doc.setFontSize(9);doc.text("Academic Result Sheet",pageWidth/2,24,{align:"center"});
+    doc.setDrawColor(210,210,210);doc.line(14,41,pageWidth-14,41);
+    doc.setFont("helvetica","bold");doc.setFontSize(11);doc.text("Student Information",14,50);
+    doc.setFont("helvetica","normal");doc.setFontSize(10);
+    doc.text("Student: "+String(student.full_name||"—"),14,57);
+    doc.text("Admission No.: "+String(student.admission_number||"—"),14,64);
+    doc.text("Class: "+String(student.classes?.name||"—"),14,71);
+    doc.text("Academic Session: "+sessionName,110,57);
+    doc.text("Term: "+termName,110,64);
+    doc.text("Average: "+(summary?Number(summary.average).toFixed(1)+"%":"—"),110,71);
+    doc.text("Position: "+(summary?.position?summary.position+ordinal(summary.position):"—"),110,78);
+    doc.autoTable({
+      startY:86,
+      head:[["Subject","CA / 40","Exam / 60","Total / 100","Grade"]],
+      body:rows.map(r=>[r.subjects?.name||"—",r.ca_score??"—",r.exam_score??"—",r.total_score??"—",r.grade||"—"]),
+      theme:"grid",
+      styles:{font:"helvetica",fontSize:9,cellPadding:3},
+      headStyles:{fontStyle:"bold"},
+      columnStyles:{1:{halign:"center"},2:{halign:"center"},3:{halign:"center"},4:{halign:"center"}}
+    });
+    let y=doc.lastAutoTable.finalY+12;
+    if(y>265){doc.addPage();y=20;}
+    doc.setFont("helvetica","bold");doc.setFontSize(10);doc.text("Teacher's Overall Remark",14,y);
+    doc.setFont("helvetica","normal");doc.setFontSize(10);
+    const remarkLines=doc.splitTextToSize(String(summary?.teacher_remark||"No overall remark provided."),pageWidth-28);
+    doc.text(remarkLines,14,y+7);
+    y+=7+(remarkLines.length*5)+10;
+    doc.setFontSize(8);doc.setTextColor(100,100,100);
+    doc.text("Issued by Covenant Crest Academy",14,y);
+    doc.text("This result is visible because it has been published by the school.",14,y+5);
+    doc.save(safeFileName(student.full_name)+"-"+safeFileName(sessionName)+"-"+safeFileName(termName)+"-result.pdf");
+  }catch(error){
+    alert(error.message||"Unable to generate PDF.");
+  }finally{
+    button.disabled=false;button.textContent=original;
+  }
+}
+
 async function renderParent(){
   const ids=window.parentLinks.map(x=>x.student_id),sessionId=document.getElementById("session").value,termId=document.getElementById("term").value,box=document.getElementById("parent-results");
   if(!ids.length){box.innerHTML='<div class="empty-state">No children are linked to this parent account.</div>';return;}
@@ -207,8 +303,14 @@ async function renderParent(){
   box.innerHTML=window.parentLinks.map(link=>{
     const st=link.students,rows=(r.data||[]).filter(x=>x.student_id===st.id),sum=summaries[st.id];
     return '<article class="report-card"><div class="report-card-head"><div><p class="eyebrow">'+esc(st.classes?.name||"Class")+'</p><h2>'+esc(st.full_name)+'</h2><small>'+esc(st.admission_number||"")+'</small></div><div class="report-stat"><span>Average</span><strong>'+(sum?Number(sum.average).toFixed(1)+"%":"—")+'</strong></div></div>'+
-      (rows.length?'<div class="table-wrap"><table><thead><tr><th>Subject</th><th>CA</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.subjects?.name)+'</td><td>'+x.ca_score+'</td><td>'+x.exam_score+'</td><td><strong>'+x.total_score+'</strong></td><td>'+esc(x.grade)+'</td></tr>').join("")+'</tbody></table></div><div class="report-footer"><span>Position: <strong>'+(sum?.position?sum.position+ordinal(sum.position):"—")+'</strong></span><span>Remark: <strong>'+esc(sum?.teacher_remark||"—")+'</strong></span></div>':'<div class="empty-state">No published result for this term.</div>')+'</article>';
+      (rows.length?'<div class="table-wrap"><table><thead><tr><th>Subject</th><th>CA</th><th>Exam</th><th>Total</th><th>Grade</th></tr></thead><tbody>'+rows.map(x=>'<tr><td>'+esc(x.subjects?.name)+'</td><td>'+x.ca_score+'</td><td>'+x.exam_score+'</td><td><strong>'+x.total_score+'</strong></td><td>'+esc(x.grade)+'</td></tr>').join("")+'</tbody></table></div><div class="report-footer"><span>Position: <strong>'+(sum?.position?sum.position+ordinal(sum.position):"—")+'</strong></span><span>Remark: <strong>'+esc(sum?.teacher_remark||"—")+'</strong></span></div><div class="result-form-actions"><button type="button" class="btn btn-primary download-result" data-student="'+esc(st.id)+'">Download PDF</button></div>':'<div class="empty-state">No published result for this term.</div>')+'</article>';
   }).join("");
+  box.querySelectorAll(".download-result").forEach(button=>{
+    const student=window.parentLinks.find(x=>x.student_id===button.dataset.student)?.students;
+    const rows=(r.data||[]).filter(x=>x.student_id===button.dataset.student);
+    const summary=summaries[button.dataset.student];
+    button.onclick=()=>downloadResultPdf(student,rows,summary,sessionId,termId,button);
+  });
 }
 
 function showError(e){content.innerHTML='<div class="empty-state">'+esc(e.message)+'</div>';}
