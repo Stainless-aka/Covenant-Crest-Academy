@@ -33,7 +33,7 @@ async function overview(){
   supabase.from("result_records").select("*",{count:"exact",head:true})
  ]);
  content.innerHTML='<div class="welcome"><div><p class="eyebrow">Administration</p><h2>Welcome, '+esc(profile.full_name)+'.</h2><p>Manage the school from one place.</p></div><img src="./public/images/logo.jpg" alt=""></div>'+
- '<div class="stat-grid"><div class="stat-card"><span>Students</span><strong>'+(a[0].count??0)+'</strong></div><div class="stat-card"><span>Classes</span><strong>'+(a[1].count??0)+'</strong></div><div class="stat-card"><span>Payments</span><strong>'+(a[2].count??0)+'</strong></div><div class="stat-card"><span>Result Entries</span><strong>'+(a[3].count??0)+'</strong></div></div>';
+ '<div class="stat-grid"><div class="stat-card"><span>Students</span><strong>'+(a[0].count??0)+'</strong></div><div class="stat-card"><span>Classes</span><strong>'+(a[1].count??0)+'</strong></div><div class="stat-card"><span>Result Entries</span><strong>'+(a[3].count??0)+'</strong></div></div>';
 }
 async function students(){
  const r=await supabase.from("students").select("*,classes(name)").order("created_at",{ascending:false});
