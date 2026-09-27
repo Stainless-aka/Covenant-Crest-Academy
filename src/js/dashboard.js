@@ -154,23 +154,33 @@ async function overviewPage() {
         </div>
       </div>
 
-      <div class="stat-grid">
-        <div class="stat-card"><span>Assigned Classes</span><strong>${assignedClasses.length}</strong></div>
-        <div class="stat-card"><span>Your Students</span><strong>${students.length}</strong></div>
+      <div class="stat-grid teacher-stat-grid">
+        <div class="stat-card">
+          <div class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 19V9m0 0 8-5 8 5m-16 0h16M7 19v-6h4v6m2 0v-6h4v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <span>Assigned Classes</span><strong>${assignedClasses.length}</strong>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20m6-9a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm5-6.5a3 3 0 0 1 0 5.8M17 15.2a3.5 3.5 0 0 1 3 3.3V20" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></div>
+          <span>Your Students</span><strong>${students.length}</strong>
+        </div>
       </div>
 
       <div class="section-heading compact">
         <h2>My Classes</h2>
       </div>
 
-      <div class="student-grid">
+      <div class="teacher-class-grid">
         ${assignedClasses.map(c => `
-          <article class="student-card">
-            <div class="avatar">${esc((c.name || "?")[0])}</div>
+          <article class="teacher-class-card">
+            <div class="class-card-top">
+              <div class="class-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none"><path d="M4 8.5 12 4l8 4.5-8 4.5L4 8.5Zm3 2.2V16l5 3 5-3v-5.3M20 9v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+              <span class="class-label">CLASS</span>
+            </div>
+            <div>
             <div>
               <h3>${esc(c.name)}</h3>
               <p>${students.filter(s => s.class_id === c.id).length} student(s)</p>
-              <a class="table-action" href="./results.html">Enter Results →</a>
+              <a class="class-action" href="./results.html">Enter Results <span aria-hidden="true">→</span></a>
             </div>
           </article>`).join("") ||
           '<div class="empty-state">No classes have been assigned to your account yet.</div>'}
