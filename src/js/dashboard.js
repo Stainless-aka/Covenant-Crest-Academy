@@ -177,7 +177,6 @@ async function overviewPage() {
               <span class="class-label">CLASS</span>
             </div>
             <div>
-            <div>
               <h3>${esc(c.name)}</h3>
               <p>${students.filter(s => s.class_id === c.id).length} student(s)</p>
               <a class="class-action" href="./results.html">Enter Results <span aria-hidden="true">→</span></a>
