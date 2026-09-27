@@ -1,4 +1,4 @@
-import { supabase, requireUser, getProfile } from "./supabase.js";
+import { supabase, requireUser, getProfile, getReferenceData, clearPortalCache } from "./supabase.js";
 
 const content=document.getElementById("admin-content");
 const title=document.getElementById("page-title");
@@ -60,10 +60,13 @@ async function studentModal(id){
  document.getElementById("form").onsubmit=async e=>{e.preventDefault();const p=Object.fromEntries(new FormData(e.target).entries());const r=id?await supabase.from("students").update(p).eq("id",id):await supabase.from("students").insert(p);if(r.error){document.getElementById("msg").textContent=r.error.message;return;}document.getElementById("modal-root").innerHTML="";students();};
 }
 async function classes(){
- const r=await supabase.from("classes").select("*").order("name");
- const t=await supabase.from("profiles").select("id,full_name").eq("role","teacher").order("full_name");
- if(r.error)return showError(r.error);
- const assigns=await supabase.from("teacher_classes").select("teacher_id,class_id");
+ const [{ data:rData, error:rError }, { data:tData, error:tError }, { data:assignData, error:assignError }] = await Promise.all([
+  supabase.from("classes").select("id,name").order("name"),
+  supabase.from("profiles").select("id,full_name").eq("role","teacher").order("full_name"),
+  supabase.from("teacher_classes").select("teacher_id,class_id")
+ ]);
+ if(rError||tError||assignError)return showError(rError||tError||assignError);
+ const r={data:rData||[]}, t={data:tData||[]}, assigns={data:assignData||[]};
  const by={};(assigns.data||[]).forEach(x=>(by[x.class_id]??=[]).push(x.teacher_id));
  const teacherById={};(t.data||[]).forEach(x=>teacherById[x.id]=x.full_name);
  content.innerHTML='<div class="page-actions"><div><p class="eyebrow">Academic Structure</p><h2>Classes</h2><p class="muted">Create classes and assign a teacher to each class.</p></div><button class="btn btn-primary" id="add">Add Class</button></div>'+
