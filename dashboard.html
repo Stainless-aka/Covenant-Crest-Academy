@@ -10,6 +10,7 @@
 <body class="app-body">
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
+      <button id="sidebar-close" class="sidebar-close" type="button" aria-label="Close menu">×</button>
       <a class="sidebar-brand" href="./dashboard.html">
         <img src="./public/images/logo.jpg" alt="" decoding="async">
         <span>Covenant Crest<br>Academy</span>
@@ -17,6 +18,8 @@
       <nav id="app-nav"></nav>
       <button id="logout" class="sidebar-logout">Sign out</button>
     </aside>
+
+    <div id="sidebar-overlay" class="sidebar-overlay" aria-hidden="true"></div>
 
     <div class="app-main">
       <header class="app-header">
