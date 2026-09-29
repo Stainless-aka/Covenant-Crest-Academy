@@ -3,134 +3,224 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Covenant Crest Academy — Rooted in Faith, Rising in Excellence.">
-  <title>Covenant Crest Academy</title>
+  <meta name="description" content="Covenant Crest Academy — Rooted in Faith, Rising in Excellence. A school committed to academic, spiritual, moral and social development.">
+  <meta name="theme-color" content="#06345d">
+  <title>Covenant Crest Academy | Rooted in Faith, Rising in Excellence</title>
   <link rel="stylesheet" href="./src/css/styles.css">
 </head>
-<body>
-  <header class="site-header">
-    <a class="brand" href="./index.html">
+<body class="landing-page">
+
+  <header class="landing-header" id="landing-header">
+    <a class="landing-brand" href="./index.html" aria-label="Covenant Crest Academy home">
       <img src="./public/images/logo.jpg" alt="Covenant Crest Academy logo" decoding="async">
       <span>
         <strong>Covenant Crest Academy</strong>
         <small>Rooted in Faith, Rising in Excellence</small>
       </span>
     </a>
-    <nav>
+
+    <nav class="landing-nav" id="landing-nav" aria-label="Main navigation">
       <a href="#about">About</a>
+      <a href="#values">Vision & Mission</a>
       <a href="#features">Portal</a>
-      <a class="btn btn-primary btn-sm" href="./login.html">Portal Login</a>
+      <a class="landing-login" href="./login.html">Portal Login <span aria-hidden="true">→</span></a>
     </nav>
+
+    <button class="landing-menu" id="landing-menu" type="button" aria-label="Open navigation" aria-expanded="false">
+      <span></span><span></span><span></span>
+    </button>
   </header>
 
   <main>
-    <section class="hero">
-      <div class="hero-slides">
-        <div class="hero-slide active">
-          <img src="./public/images/hero/hero-1.jpg" alt="Covenant Crest Academy students" fetchpriority="high" decoding="async">
+    <section class="landing-hero">
+      <div class="landing-hero-slides" aria-hidden="true">
+        <div class="landing-hero-slide active">
+          <img src="./public/images/hero/hero-1.jpg" alt="">
         </div>
-        <div class="hero-slide">
-          <img src="./public/images/hero/hero-2.jpg" alt="Covenant Crest Academy students in class" loading="lazy" decoding="async">
-        </div>
-      </div>
-      <div class="hero-overlay"></div>
-      <div class="hero-content">
-        <p class="eyebrow">Covenant Crest Academy</p>
-        <h1>Rooted in Faith,<br>Rising in Excellence.</h1>
-        <p>Learning, character, and academic excellence supported by a simple digital school portal.</p>
-        <div class="hero-actions">
-          <a class="btn btn-gold" href="./login.html">Access Portal</a>
-          <a class="btn btn-light" href="#features">Explore System</a>
+        <div class="landing-hero-slide">
+          <img src="./public/images/hero/hero-2.jpg" alt="">
         </div>
       </div>
-      <div class="hero-dots" aria-label="Hero slides">
-        <button class="active" data-slide="0" aria-label="Slide 1"></button>
-        <button data-slide="1" aria-label="Slide 2"></button>
+      <div class="landing-hero-shade"></div>
+      <div class="landing-hero-glow"></div>
+
+      <div class="landing-container landing-hero-inner">
+        <div class="landing-hero-copy">
+          <div class="landing-kicker"><span></span> Covenant Crest Academy</div>
+          <h1>Building character.<br><em>Shaping futures.</em></h1>
+          <p class="landing-hero-text">A nurturing learning environment where faith, knowledge, discipline and excellence prepare young people to make a positive impact in society.</p>
+
+          <div class="landing-hero-actions">
+            <a class="landing-btn landing-btn-gold" href="./login.html">Access School Portal <span>→</span></a>
+            <a class="landing-btn landing-btn-ghost" href="#about">Discover Our School</a>
+          </div>
+
+          <div class="landing-trust">
+            <div><strong>Faith</strong><span>Guided by values</span></div>
+            <div><strong>Excellence</strong><span>Driven to achieve</span></div>
+            <div><strong>Character</strong><span>Built for impact</span></div>
+          </div>
+        </div>
+
+        <div class="landing-hero-card">
+          <div class="landing-card-logo"><img src="./public/images/logo.jpg" alt="" decoding="async"></div>
+          <p>Our guiding principle</p>
+          <h2>Rooted in Faith,<br>Rising in Excellence.</h2>
+          <div class="landing-card-line"></div>
+          <small>Academic excellence • Godly guidance • Strong character</small>
+        </div>
+      </div>
+
+      <div class="landing-slide-controls" aria-label="Hero image controls">
+        <button class="active" data-slide="0" aria-label="Show first image"></button>
+        <button data-slide="1" aria-label="Show second image"></button>
       </div>
     </section>
 
-    <section id="about" class="section intro">
-      <div>
-        <p class="eyebrow">Our school</p>
-        <h2>One place for the school community.</h2>
-      </div>
-      <p>The Covenant Crest Academy portal connects school administration, teachers, and parents around the core information that matters: students, classes, parent relationships, and academic results.</p>
-    </section>
-
-    <section class="section feature-grid" aria-label="Our vision and mission">
-      <article class="feature-card">
-        <span>OUR VISION</span>
-        <h3>Future Leaders with Purpose</h3>
-        <p>To raise future leaders equipped to make positive impacts in the society through Godly guidance and academic excellence.</p>
-      </article>
-      <article class="feature-card">
-        <span>OUR MISSION</span>
-        <h3>Training Well-Rounded Leaders</h3>
-        <p>To train future leaders that are academically, spiritually, morally and socially sound.</p>
-      </article>
-    </section>
-
-    <section id="features" class="section">
-      <div class="section-heading">
-        <p class="eyebrow">MVP Modules</p>
-        <h2>Everything starts with the student.</h2>
-      </div>
-      <div class="feature-grid">
-        <article class="feature-card">
-          <span>01</span>
-          <h3>Student Registration</h3>
-          <p>Register students, assign classes, and connect children with parent accounts.</p>
-        </article>
-        <article class="feature-card">
-          <span>02</span>
-          <h3>Class Management</h3>
-          <p>Manage classes, connect teachers to their assigned classes, and maintain an organized student structure.</p>
-        </article>
-        <article class="feature-card">
-          <span>03</span>
-          <h3>End-of-Term Results</h3>
-          <p>Teachers enter CA and examination scores while parents view published results.</p>
-        </article>
+    <section id="about" class="landing-section landing-about">
+      <div class="landing-container landing-about-grid">
+        <div>
+          <div class="landing-section-label">Who we are</div>
+          <h2>A school community built around <span>purpose.</span></h2>
+        </div>
+        <div>
+          <p class="landing-lead">Covenant Crest Academy is committed to raising young people who are academically capable, spiritually grounded, morally responsible and socially prepared.</p>
+          <p>Our digital school portal brings administration, teachers and parents together around essential student and academic information, making everyday school management simpler and more organized.</p>
+          <a class="landing-text-link" href="#values">Learn about our vision and mission <span>→</span></a>
+        </div>
       </div>
     </section>
 
-    <section class="section role-strip">
-      <div>
-        <strong>Admin</strong>
-        <span>Manage the school</span>
+    <section id="values" class="landing-section landing-values">
+      <div class="landing-container">
+        <div class="landing-section-intro">
+          <div>
+            <div class="landing-section-label">What guides us</div>
+            <h2>Purpose at the heart<br>of everything we do.</h2>
+          </div>
+          <p>Our vision and mission define the kind of leaders we seek to develop and the values that shape our learning community.</p>
+        </div>
+
+        <div class="landing-values-grid">
+          <article class="landing-value-card landing-value-main">
+            <div class="landing-value-number">01</div>
+            <div>
+              <div class="landing-mini-label">OUR VISION</div>
+              <h3>Future leaders with purpose.</h3>
+              <p>To raise future leaders equipped to make positive impacts in the society through Godly guidance and academic excellence.</p>
+            </div>
+          </article>
+
+          <article class="landing-value-card">
+            <div class="landing-value-number">02</div>
+            <div>
+              <div class="landing-mini-label">OUR MISSION</div>
+              <h3>Training well-rounded leaders.</h3>
+              <p>To train future leaders that are academically, spiritually, morally and socially sound.</p>
+            </div>
+          </article>
+        </div>
       </div>
-      <div>
-        <strong>Teacher</strong>
-        <span>Enter academic results</span>
+    </section>
+
+    <section id="features" class="landing-section landing-portal">
+      <div class="landing-container">
+        <div class="landing-section-intro">
+          <div>
+            <div class="landing-section-label">School portal</div>
+            <h2>Simple tools for<br>better school management.</h2>
+          </div>
+          <p>Purpose-built for the people who keep the school community moving: administrators, teachers and parents.</p>
+        </div>
+
+        <div class="landing-feature-grid">
+          <article class="landing-feature-card">
+            <div class="landing-feature-icon">01</div>
+            <h3>Student Management</h3>
+            <p>Register students, assign classes and keep essential student records organized in one place.</p>
+            <span class="landing-feature-arrow">→</span>
+          </article>
+          <article class="landing-feature-card">
+            <div class="landing-feature-icon">02</div>
+            <h3>Class Management</h3>
+            <p>Organize classes and connect teachers with the classes they are responsible for.</p>
+            <span class="landing-feature-arrow">→</span>
+          </article>
+          <article class="landing-feature-card">
+            <div class="landing-feature-icon">03</div>
+            <h3>Academic Results</h3>
+            <p>Teachers enter results while parents securely view published academic performance for their children.</p>
+            <span class="landing-feature-arrow">→</span>
+          </article>
+        </div>
+
+        <div class="landing-role-grid">
+          <div><span class="landing-role-icon">A</span><div><strong>Administrator</strong><small>Manage school records and operations</small></div></div>
+          <div><span class="landing-role-icon">T</span><div><strong>Teacher</strong><small>Manage assigned classes and results</small></div></div>
+          <div><span class="landing-role-icon">P</span><div><strong>Parent</strong><small>View children and published results</small></div></div>
+        </div>
       </div>
-      <div>
-        <strong>Parent</strong>
-        <span>View children, fees and results</span>
+    </section>
+
+    <section class="landing-cta">
+      <div class="landing-container landing-cta-inner">
+        <div>
+          <div class="landing-section-label">Covenant Crest Academy</div>
+          <h2>Growing minds.<br><span>Strengthening character.</span></h2>
+        </div>
+        <div>
+          <p>Access the school portal to continue to your dedicated school workspace.</p>
+          <a class="landing-btn landing-btn-gold" href="./login.html">Enter School Portal <span>→</span></a>
+        </div>
       </div>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <img src="./public/images/logo.jpg" alt="" decoding="async">
-    <div>
-      <strong>Covenant Crest Academy</strong>
-      <span>Rooted in Faith, Rising in Excellence</span>
+  <footer class="landing-footer">
+    <div class="landing-container landing-footer-inner">
+      <a class="landing-brand footer-brand" href="./index.html">
+        <img src="./public/images/logo.jpg" alt="Covenant Crest Academy logo" decoding="async">
+        <span><strong>Covenant Crest Academy</strong><small>Rooted in Faith, Rising in Excellence</small></span>
+      </a>
+      <div class="landing-footer-note">Academic excellence • Godly guidance • Strong character</div>
+      <div class="landing-footer-copy">© <span id="year"></span> Covenant Crest Academy</div>
     </div>
-    <span class="footer-copy">© <span id="year"></span> Covenant Crest Academy</span>
   </footer>
 
-  <script type="module">
-    document.getElementById("year").textContent = new Date().getFullYear();
-    const slides = [...document.querySelectorAll(".hero-slide")];
-    const dots = [...document.querySelectorAll(".hero-dots button")];
+  <script>
+    const header = document.getElementById("landing-header");
+    const menu = document.getElementById("landing-menu");
+    const nav = document.getElementById("landing-nav");
+    const slides = [...document.querySelectorAll(".landing-hero-slide")];
+    const dots = [...document.querySelectorAll(".landing-slide-controls button")];
     let current = 0;
+
     function showSlide(index) {
       current = index;
-      slides.forEach((s, i) => s.classList.toggle("active", i === index));
-      dots.forEach((d, i) => d.classList.toggle("active", i === index));
+      slides.forEach((slide, i) => slide.classList.toggle("active", i === index));
+      dots.forEach((dot, i) => dot.classList.toggle("active", i === index));
     }
-    dots.forEach((dot, i) => dot.addEventListener("click", () => showSlide(i)));
-    setInterval(() => showSlide((current + 1) % slides.length), 6000);
+
+    dots.forEach((dot, index) => dot.addEventListener("click", () => showSlide(index)));
+    setInterval(() => showSlide((current + 1) % slides.length), 6500);
+
+    window.addEventListener("scroll", () => {
+      header.classList.toggle("scrolled", window.scrollY > 30);
+    }, { passive: true });
+
+    menu.addEventListener("click", () => {
+      const open = nav.classList.toggle("open");
+      menu.classList.toggle("open", open);
+      menu.setAttribute("aria-expanded", String(open));
+    });
+
+    nav.querySelectorAll("a").forEach(link => link.addEventListener("click", () => {
+      nav.classList.remove("open");
+      menu.classList.remove("open");
+      menu.setAttribute("aria-expanded", "false");
+    }));
+
+    document.getElementById("year").textContent = new Date().getFullYear();
   </script>
 </body>
 </html>
